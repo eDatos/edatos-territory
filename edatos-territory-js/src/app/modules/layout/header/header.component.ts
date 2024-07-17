@@ -41,7 +41,7 @@ export class HeaderComponent implements OnInit {
 
     private initializeNavbarComponents() {
         const componentRef = this.viewContainerRef.createComponent(TerritoryAutocompleteComponent);
-        if (typeof Edatos !== "undefined" && Edatos.HeaderManagement) {
+        if (typeof Edatos !== "undefined" && typeof Edatos.HeaderManagement !== "undefined") {
             Edatos.HeaderManagement.addAtEnd(componentRef.location.nativeElement);
         }
     }
