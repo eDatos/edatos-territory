@@ -4,7 +4,7 @@ import { TreeNode } from "primeng/api";
 
 import { TranslateService } from "@ngx-translate/core";
 
-import { JAXI_TERRITORY_QUERY_KEY } from "@app/app.constants";
+import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
 import {
     OperationsWithSubjectArea,
     Resource,
@@ -94,11 +94,12 @@ export class OperationsListComponent implements OnInit {
 
     getVisualizerUrl(datasetId: string): string {
         let dataset = this.datasets!.find((dataset) => dataset.id === datasetId);
-        let url = dataset!.visualizerHtmlLink;
-        if (this.isJaxiDataset(url)) {
-            return this.addTerritoryQueryParam(url);
+        let url = new URL(dataset!.visualizerHtmlLink);
+        if (this.territoryId) {
+            const paramName = this.isJaxiDataset(url.toString()) ? JAXI_TERRITORY_QUERY_KEY : VISUALIZER_TERRITORY_QUERY_KEY;
+            url.searchParams.set(paramName, this.territoryId);
         }
-        return url;
+        return url.toString();
     }
 
     private toTreeNodeList(siemacResource: { urn: string; getName: Function }[]): TreeNode[] {
@@ -122,14 +123,6 @@ export class OperationsListComponent implements OnInit {
 
     private getDatasetsByStatisticalOperation(statisticalOperationUrn: string): Resource[] {
         return this.datasets?.filter((dataset) => dataset.statisticalOperation?.urn === statisticalOperationUrn) || [];
-    }
-
-    private addTerritoryQueryParam(url: string) {
-        const jaxiVisualizationUrl = new URL(url);
-        if (this.territoryId) {
-            jaxiVisualizationUrl.searchParams.set(JAXI_TERRITORY_QUERY_KEY, this.territoryId);
-        }
-        return jaxiVisualizationUrl.toString();
     }
 
     private isJaxiDataset(url: string) {
