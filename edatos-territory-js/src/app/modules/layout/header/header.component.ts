@@ -1,32 +1,30 @@
-import { DOCUMENT } from "@angular/common";
-import { Component, ElementRef, Inject, OnInit, Renderer2, ViewContainerRef } from "@angular/core";
+import { Component, ElementRef, OnInit, ViewContainerRef } from "@angular/core";
 
 import { TranslateService } from "@ngx-translate/core";
+import { CookieService } from "ngx-cookie-service";
 
+import { AVAILABLE_LANGS } from "@app/app.constants";
 import { HtmlService, PropertiesService } from "@app/core/service";
 import { reinsertScripts } from "@app/modules/layout";
 import { TerritoryAutocompleteComponent } from "@app/shared/components/territory-autocomplete";
-import {CookieService} from "ngx-cookie-service";
-import {AVAILABLE_LANGS} from "@app/app.constants";
+
+declare const Edatos: any;
 
 @Component({
     selector: "app-header",
     templateUrl: "./header.component.html",
 })
 export class HeaderComponent implements OnInit {
-    static readonly TITLE_NAVBAR_ID = "title-bar";
     headerHtml = "";
 
     constructor(
         private elementRef: ElementRef,
         private htmlService: HtmlService,
         private translateService: TranslateService,
-        private renderer: Renderer2,
         private viewContainerRef: ViewContainerRef,
         private propertiesService: PropertiesService,
         private cookieService: CookieService,
-        private languageService: TranslateService,
-        @Inject(DOCUMENT) private document: Document
+        private languageService: TranslateService
     ) {}
 
     ngOnInit() {
@@ -43,10 +41,9 @@ export class HeaderComponent implements OnInit {
 
     private initializeNavbarComponents() {
         const componentRef = this.viewContainerRef.createComponent(TerritoryAutocompleteComponent);
-        this.renderer.appendChild(
-            this.document.getElementById(HeaderComponent.TITLE_NAVBAR_ID),
-            componentRef.location.nativeElement
-        );
+        if (typeof Edatos !== "undefined" && Edatos.HeaderManagement) {
+            Edatos.HeaderManagement.addAtEnd(componentRef.location.nativeElement);
+        }
     }
 
     private updateLang() {
