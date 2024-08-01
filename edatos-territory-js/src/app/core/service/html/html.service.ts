@@ -10,10 +10,16 @@ import { PropertiesService } from "@app/core/service";
     providedIn: "root",
 })
 export class HtmlService {
-    constructor(private http: HttpClient, private propertiesService: PropertiesService) {}
+    constructor(
+        private http: HttpClient,
+        private propertiesService: PropertiesService
+    ) {}
 
     getHeaderHtml(appName?: string): Observable<string> {
-        return this.getComponentByUrl(this.propertiesService.getLayoutHeaderUrl(), { appName });
+        return this.getComponentByUrl(this.propertiesService.getLayoutHeaderUrl(), {
+            appId: "edatos-territory",
+            appName,
+        });
     }
 
     getFooterHtml(): Observable<string> {
