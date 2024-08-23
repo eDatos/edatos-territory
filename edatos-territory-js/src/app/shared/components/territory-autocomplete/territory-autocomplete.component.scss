@@ -1,0 +1,11 @@
+:host {
+    width: 25rem;
+    ::ng-deep {
+        .p-autocomplete-panel {
+            right: 0;
+        }
+        .p-autocomplete-dropdown.p-button {
+            max-height: 100%;
+        }
+    }
+}
