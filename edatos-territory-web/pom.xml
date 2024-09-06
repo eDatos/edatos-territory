@@ -123,6 +123,23 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-resources-assets</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/static/assets</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.parent.basedir}/edatos-territory-js/dist/assets</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <delimiters>@</delimiters>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
