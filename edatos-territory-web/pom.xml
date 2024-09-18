@@ -137,7 +137,6 @@
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
-                            <delimiters>@</delimiters>
                         </configuration>
                     </execution>
                 </executions>
