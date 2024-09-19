@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from "@angular/core";
+import { SrmService } from "@app/core/service/srm/srm.service";
 
 import { TreeNode } from "primeng/api";
 
@@ -6,12 +7,14 @@ import { TranslateService } from "@ngx-translate/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
 import {
+    Categories,
     OperationsWithSubjectArea,
     Resource,
     ResourceWithStatisticalOperation,
     StatisticalOperation,
 } from "@app/core/model";
 import { OperationService } from "@app/core/service";
+import { forkJoin } from "rxjs";
 
 @Component({
     selector: "app-operations-list",
@@ -31,9 +34,12 @@ export class OperationsListComponent implements OnInit {
     tree: TreeNode[] = [];
     loading = false;
 
+    private subjectAreas: Resource[] = [];
+
     constructor(
         private translateService: TranslateService,
-        private operationsService: OperationService
+        private operationsService: OperationService,
+        private srmService: SrmService
     ) {}
 
     private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
@@ -62,38 +68,60 @@ export class OperationsListComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.operationsService.getListOfOperations().subscribe((operationsWithSubjectArea) => {
+        const operations = this.operationsService.getListOfOperations();
+        const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
+
+        forkJoin([operations, defaultSubjectAreas]).subscribe(([operationsWithSubjectArea, subjectAreas]) => {
             const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
-            this.tree = this.createTree(operations);
+            this.tree = this.createTree(operations, subjectAreas);
         });
     }
 
-    private createTree(operations: StatisticalOperation[]) {
-        const uniqueSubjectAreas = operations
-            .map((op) => op.subjectArea)
-            .filter((res, index, self) => {
-                return self.findIndex((innerRes) => innerRes.id === res.id) === index;
-            })
-            .sort((a, b) => a.id.localeCompare(b.id) || 0);
-        const firstLevel = [];
-        for (const subjectArea of uniqueSubjectAreas) {
-            const node: TreeNode = {
-                key: subjectArea.urn,
-                label: subjectArea.getName(this.translateService.currentLang) || undefined,
-                data: subjectArea,
-                leaf: false,
-                children: this.toTreeNodeList(operations.filter((op) => op.subjectArea.id === subjectArea.id)).sort(
-                    (a, b) => a.label!.localeCompare(b.label!) || 0
-                ),
-            };
-            firstLevel.push(node);
-        }
+    private createTree(operations: StatisticalOperation[], allSubjectAreas: Categories) {
+        this.subjectAreas = allSubjectAreas.category.sort((a, b) => a.id.localeCompare(b.id) || 0);
+        const rootAreas = this.subjectAreas.filter(subjectArea => !subjectArea.nestedId.includes("."));
+        return this.expandBranch(operations, rootAreas);
+    }
 
-        return firstLevel;
+
+    private expandBranch(operations: StatisticalOperation[], parentSubjectAreas: Resource[]): TreeNode[] {
+        const level = [];
+        for (const parentSubjectArea of parentSubjectAreas) {
+            // nested operations may be direct children of this parent subject area or may be deeper in the tree
+            const nestedOperations = operations.filter((operation) => operation.subjectArea && operation.subjectArea.nestedId.startsWith(parentSubjectArea.nestedId));
+            if (nestedOperations.length === 0) {
+                continue; // don't show subject area if it has no operations
+            }
+
+            // operations that are direct children of the subject area
+            const childOperations = nestedOperations.filter((operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId);
+
+            // show first operations, then subject areas
+            const children = this.toTreeNodeList(childOperations);
+
+            if (nestedOperations.length > childOperations.length) {
+                // expand branch to add remaining operations if there are still nested operations but none of then is a direct child
+                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) => subjectArea.nestedId.startsWith(parentSubjectArea.nestedId) && subjectArea.nestedId !== parentSubjectArea.nestedId);
+                children.push(...this.expandBranch(nestedOperations, nestedSubjectAreas));
+            }
+
+            const node: TreeNode = {
+                key: parentSubjectArea.urn,
+                label: parentSubjectArea.getName(this.translateService.currentLang) || undefined,
+                data: parentSubjectArea,
+                leaf: false,
+                children,
+            };
+            level.push(node)
+        }
+        return level;
     }
 
     getVisualizerUrl(datasetId: string): string {
         let dataset = this.datasets!.find((dataset) => dataset.id === datasetId);
+        if (!dataset?.visualizerHtmlLink) {
+            throw Error("dataset has invalid format: no visualizerHtmlLink")
+        }
         let url = new URL(dataset!.visualizerHtmlLink);
         if (this.territoryId) {
             const paramName = this.isJaxiDataset(url.toString()) ? JAXI_TERRITORY_QUERY_KEY : VISUALIZER_TERRITORY_QUERY_KEY;
@@ -118,7 +146,7 @@ export class OperationsListComponent implements OnInit {
                 node.children = this.toTreeNodeList(this.getDatasetsByStatisticalOperation(elem.urn));
             }
         }
-        return children;
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
     private getDatasetsByStatisticalOperation(statisticalOperationUrn: string): Resource[] {
