@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnInit, ViewContainerRef } from "@angular/core";
+import { DOCUMENT } from "@angular/common";
+import { Component, ElementRef, Inject, OnInit, ViewContainerRef } from "@angular/core";
 
 import { TranslateService } from "@ngx-translate/core";
 import { CookieService } from "ngx-cookie-service";
@@ -24,7 +25,8 @@ export class HeaderComponent implements OnInit {
         private viewContainerRef: ViewContainerRef,
         private propertiesService: PropertiesService,
         private cookieService: CookieService,
-        private languageService: TranslateService
+        private languageService: TranslateService,
+        @Inject(DOCUMENT) private document: Document
     ) {}
 
     ngOnInit() {
@@ -53,6 +55,7 @@ export class HeaderComponent implements OnInit {
             this.languageService.use(cookieValue).subscribe(() => {
                 console.debug("Language changed to", cookieValue);
             });
+            this.document.documentElement.lang = cookieValue;
         }
     }
 }
