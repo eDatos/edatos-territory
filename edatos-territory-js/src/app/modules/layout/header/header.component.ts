@@ -9,8 +9,6 @@ import { HtmlService, PropertiesService } from "@app/core/service";
 import { reinsertScripts } from "@app/modules/layout";
 import { TerritoryAutocompleteComponent } from "@app/shared/components/territory-autocomplete";
 
-declare const Edatos: any;
-
 @Component({
     selector: "app-header",
     templateUrl: "./header.component.html",
@@ -23,8 +21,6 @@ export class HeaderComponent implements OnInit {
         private htmlService: HtmlService,
         private translateService: TranslateService,
         private viewContainerRef: ViewContainerRef,
-        private propertiesService: PropertiesService,
-        private cookieService: CookieService,
         private languageService: TranslateService,
         @Inject(DOCUMENT) private document: Document
     ) {}
@@ -49,13 +45,11 @@ export class HeaderComponent implements OnInit {
     }
 
     private updateLang() {
-        const cookieName = this.propertiesService.getLanguageCookieName();
-        const cookieValue = this.cookieService.get(cookieName);
+        const cookieValue = Edatos.i18n.getChosenLocaleCookie();
         if (cookieValue && AVAILABLE_LANGS.includes(cookieValue)) {
             this.languageService.use(cookieValue).subscribe(() => {
                 console.debug("Language changed to", cookieValue);
             });
-            this.document.documentElement.lang = cookieValue;
         }
     }
 }
