@@ -1,20 +1,14 @@
 import { Component, Input, OnInit } from "@angular/core";
-import { SrmService } from "@app/core/service/srm/srm.service";
 
-import { TreeNode } from "primeng/api";
+import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
+import { Categories, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
+import { OperationService } from "@app/core/service";
+import { SrmService } from "@app/core/service/srm/srm.service";
 
 import { TranslateService } from "@ngx-translate/core";
 
-import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import {
-    Categories,
-    OperationsWithSubjectArea,
-    Resource,
-    ResourceWithStatisticalOperation,
-    StatisticalOperation,
-} from "@app/core/model";
-import { OperationService } from "@app/core/service";
-import { forkJoin } from "rxjs";
+import { TreeNode } from "primeng/api";
+import { finalize, forkJoin } from "rxjs";
 
 @Component({
     selector: "app-operations-list",
@@ -32,15 +26,16 @@ export class OperationsListComponent implements OnInit {
     territoryId?: string;
 
     tree: TreeNode[] = [];
-    loading = false;
+    loading = true;
 
     private subjectAreas: Resource[] = [];
 
     constructor(
         private translateService: TranslateService,
         private operationsService: OperationService,
-        private srmService: SrmService
-    ) {}
+        private srmService: SrmService,
+    ) {
+    }
 
     private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
         const operations: StatisticalOperation[] = [];
@@ -48,7 +43,7 @@ export class OperationsListComponent implements OnInit {
             this.datasets.forEach((dataset) => {
                 if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
                     const subjectArea = operationsWithSubjectArea.operation.find(
-                        (res) => res.id === dataset.statisticalOperation.id
+                        (res) => res.id === dataset.statisticalOperation.id,
                     )?.subjectArea; // subjectArea should always be present
                     if (subjectArea) {
                         operations.push(
@@ -56,8 +51,8 @@ export class OperationsListComponent implements OnInit {
                                 dataset.statisticalOperation.id,
                                 dataset.statisticalOperation.urn,
                                 dataset.statisticalOperation.name,
-                                subjectArea
-                            )
+                                subjectArea,
+                            ),
                         );
                     }
                 }
@@ -71,10 +66,12 @@ export class OperationsListComponent implements OnInit {
         const operations = this.operationsService.getListOfOperations();
         const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
 
-        forkJoin([operations, defaultSubjectAreas]).subscribe(([operationsWithSubjectArea, subjectAreas]) => {
-            const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
-            this.tree = this.createTree(operations, subjectAreas);
-        });
+        forkJoin([operations, defaultSubjectAreas])
+            .pipe(finalize(() => (this.loading = false)))
+            .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
+                const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
+                this.tree = this.createTree(operations, subjectAreas);
+            });
     }
 
     private createTree(operations: StatisticalOperation[], allSubjectAreas: Categories) {

@@ -15,7 +15,7 @@ import { DatasetService } from "@app/core/service";
 })
 export class TerritoryDetailComponent implements OnInit {
     resources?: ResourceWithStatisticalOperation[];
-    loading = false;
+    loading = true;
     territoryId?: string;
 
     constructor(
@@ -36,7 +36,6 @@ export class TerritoryDetailComponent implements OnInit {
     }
 
     init(territoryId: string) {
-        this.loading = true;
         this.territoryId = territoryId;
 
         this.datasetService
