@@ -5,7 +5,7 @@
     <parent>
         <groupId>es.gobcan.istac.edatos-territory</groupId>
         <artifactId>edatos-territory</artifactId>
-        <version>1.6.1-SNAPSHOT</version>
+        <version>1.6.1</version>
     </parent>
 
     <artifactId>edatos-territory-js</artifactId>
@@ -23,7 +23,7 @@
         <url>https://git.arte-consultores.com/istac/edatos-territory</url>
         <connection>scm:git:https://git.arte-consultores.com/istac/edatos-territory</connection>
         <developerConnection>scm:git:https://git.arte-consultores.com/istac/edatos-territory</developerConnection>
-        <tag>HEAD</tag>
+        <tag>edatos-territory-1.6.1</tag>
     </scm>
 
     <issueManagement>
