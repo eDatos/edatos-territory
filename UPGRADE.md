@@ -13,3 +13,6 @@
 * Se modifica el fichero de configuración para incluir dos nuevas propiedades:
   * `defaultCategoryScheme` con el identificador del esquema de temas por defecto.
   * `structuralResources.rest.external` con la URL de la API externa de SRM.
+
+## 0.0.0 a 1.6.0
+* El proceso de actualizaciones entre versiones para versiones anteriores a la 1.6.0 está definido en el archivo README.md
