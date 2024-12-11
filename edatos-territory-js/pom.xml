@@ -5,7 +5,7 @@
     <parent>
         <groupId>es.gobcan.istac.edatos-territory</groupId>
         <artifactId>edatos-territory</artifactId>
-        <version>1.6.1-SNAPSHOT</version>
+        <version>1.6.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>edatos-territory-js</artifactId>
