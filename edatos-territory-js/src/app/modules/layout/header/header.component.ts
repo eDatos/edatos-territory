@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnInit, ViewContainerRef } from "@angular/core";
+import { DOCUMENT } from "@angular/common";
+import { Component, ElementRef, Inject, OnInit, ViewContainerRef } from "@angular/core";
 
 import { TranslateService } from "@ngx-translate/core";
 import { CookieService } from "ngx-cookie-service";
@@ -7,8 +8,6 @@ import { AVAILABLE_LANGS } from "@app/app.constants";
 import { HtmlService, PropertiesService } from "@app/core/service";
 import { reinsertScripts } from "@app/modules/layout";
 import { TerritoryAutocompleteComponent } from "@app/shared/components/territory-autocomplete";
-
-declare const Edatos: any;
 
 @Component({
     selector: "app-header",
@@ -22,9 +21,8 @@ export class HeaderComponent implements OnInit {
         private htmlService: HtmlService,
         private translateService: TranslateService,
         private viewContainerRef: ViewContainerRef,
-        private propertiesService: PropertiesService,
-        private cookieService: CookieService,
-        private languageService: TranslateService
+        private languageService: TranslateService,
+        @Inject(DOCUMENT) private document: Document
     ) {}
 
     ngOnInit() {
@@ -47,8 +45,7 @@ export class HeaderComponent implements OnInit {
     }
 
     private updateLang() {
-        const cookieName = this.propertiesService.getLanguageCookieName();
-        const cookieValue = this.cookieService.get(cookieName);
+        const cookieValue = Edatos.i18n.getChosenLocaleCookie();
         if (cookieValue && AVAILABLE_LANGS.includes(cookieValue)) {
             this.languageService.use(cookieValue).subscribe(() => {
                 console.debug("Language changed to", cookieValue);
