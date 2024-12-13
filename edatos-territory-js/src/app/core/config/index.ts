@@ -1,7 +1,8 @@
 // allows type checking for typescript
 import * as PROPERTIES from "../../../assets/properties.json";
+import * as VERSION from "../../../assets/version.json";
 
-type Properties = typeof PROPERTIES;
+type Properties = typeof PROPERTIES & typeof VERSION;
 export { Properties };
 
 export interface Territories {
