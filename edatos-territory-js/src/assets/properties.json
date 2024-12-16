@@ -26,5 +26,6 @@
                 "external": "metamac.portal.web.external.visualizer"
             }
         }
-    }
+    },
+	"appVersion": "@project.version@"
 }

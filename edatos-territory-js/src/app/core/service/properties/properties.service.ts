@@ -75,6 +75,7 @@ export class PropertiesService {
                     layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
                     layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
                     languageCookieName: this.requestMetadataKeyValue(props.keys.languageCookieName),
+					appVersion: of(props.appVersion)
                 };
 
                 // load all properties at the same time
@@ -126,5 +127,9 @@ export class PropertiesService {
 
     getLanguageCookieName() {
         return this.properties.languageCookieName;
+    }
+	
+	getAppVersion(): string {
+        return this.properties.appVersion;
     }
 }
