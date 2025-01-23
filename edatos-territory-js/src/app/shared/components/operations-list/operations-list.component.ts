@@ -88,7 +88,9 @@ export class OperationsListComponent implements OnInit {
         const level = [];
         for (const parentSubjectArea of parentSubjectAreas) {
             // nested operations may be direct children of this parent subject area or may be deeper in the tree
-            const nestedOperations = operations.filter((operation) => operation.subjectArea && operation.subjectArea.nestedId.startsWith(parentSubjectArea.nestedId));
+            const nestedOperations = operations.filter((operation) => {
+                return this.isChildOf(operation.subjectArea, parentSubjectArea) || operation.subjectArea.nestedId === parentSubjectArea.nestedId;
+            });
             if (nestedOperations.length === 0) {
                 continue; // don't show subject area if it has no operations
             }
@@ -101,7 +103,7 @@ export class OperationsListComponent implements OnInit {
 
             if (nestedOperations.length > childOperations.length) {
                 // expand branch to add remaining operations if there are still nested operations but none of then is a direct child
-                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) => subjectArea.nestedId.startsWith(parentSubjectArea.nestedId) && subjectArea.nestedId !== parentSubjectArea.nestedId);
+                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) => this.isChildOf(subjectArea, parentSubjectArea, true));
                 children.push(...this.expandBranch(nestedOperations, nestedSubjectAreas));
             }
 
@@ -115,6 +117,27 @@ export class OperationsListComponent implements OnInit {
             level.push(node)
         }
         return level;
+    }
+
+    private isChildOf(child: Resource, parent: Resource, checkIfDirectChild = false) {
+        const childNestedId = child.nestedId.split(".");
+        const parentNestedId = parent.nestedId.split(".");
+
+        if (checkIfDirectChild && childNestedId.length - parentNestedId.length != 1) {
+            return false;
+        }
+
+        if (childNestedId.length <= parentNestedId.length) {
+            return false;
+        }
+
+        for (let i = 0; i < parentNestedId.length; i++) {
+            if (childNestedId[i] !== parentNestedId[i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     getVisualizerUrl(datasetId: string): string {
