@@ -4,21 +4,22 @@ import { InternationalString, Kind, SelfLink, StatisticalOperation } from "@app/
 
 export class Resource {
     public id!: string;
+    public nestedId!: string;
     public urn!: string;
 
     @Type(() => InternationalString)
     public name!: InternationalString;
 
-    getName(lang: string): string | null {
-        return this.name.get(lang);
-    }
-
-    public visualizerHtmlLink!: string;
-
     @Type(() => SelfLink)
     public selfLink!: SelfLink;
 
-    public kind = Kind.DATASET;
+    public kind!: Kind;
+
+    public visualizerHtmlLink?: string;
+
+    getName(lang: string): string | null {
+        return this.name.get(lang);
+    }
 }
 
 export class ResourceWithStatisticalOperation extends Resource {
@@ -35,12 +36,12 @@ export class Resources {
     public kind!: Kind;
 
     public total!: number;
-    public limit!: number;
-    public offset!: number;
-
+    public limit?: number;
+    public offset?: number;
     public selfLink!: string;
-    public nextLink!: string;
-    public lastLink!: string;
+
+    public nextLink?: string;
+    public lastLink?: string;
 }
 
 export class ResourcesWithStatisticalOperation extends Resources {

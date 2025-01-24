@@ -1,12 +1,12 @@
 import { DOCUMENT } from "@angular/common";
-import { Component, ElementRef, Inject, OnInit, ViewContainerRef } from "@angular/core";
+import { Component, Inject, OnInit, ViewContainerRef } from "@angular/core";
 
 import { TranslateService } from "@ngx-translate/core";
 import { CookieService } from "ngx-cookie-service";
 
 import { AVAILABLE_LANGS } from "@app/app.constants";
 import { HtmlService, PropertiesService } from "@app/core/service";
-import { reinsertScripts } from "@app/modules/layout";
+import { appendContextualFragment } from "@app/modules/layout";
 import { TerritoryAutocompleteComponent } from "@app/shared/components/territory-autocomplete";
 
 @Component({
@@ -17,7 +17,6 @@ export class HeaderComponent implements OnInit {
     headerHtml = "";
 
     constructor(
-        private elementRef: ElementRef,
         private htmlService: HtmlService,
         private translateService: TranslateService,
         private viewContainerRef: ViewContainerRef,
@@ -29,11 +28,9 @@ export class HeaderComponent implements OnInit {
         const appName = this.translateService.instant("app.name");
         this.htmlService.getHeaderHtml(appName).subscribe((data) => {
             this.headerHtml = data.toString();
-            setTimeout(() => {
-                reinsertScripts(this.elementRef);
-                this.initializeNavbarComponents();
-                this.updateLang();
-            });
+            appendContextualFragment(this.headerHtml, "header");
+            this.initializeNavbarComponents();
+            this.updateLang();
         });
     }
 

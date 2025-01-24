@@ -71,11 +71,15 @@ export class PropertiesService {
                     statisticalOperationsExternalApiUrl: this.requestMetadataKeyValue(
                         props.keys.statisticalOperations.rest.external
                     ),
+                    structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
+                        props.keys.structuralResources.rest.external
+                    ),
                     visualizerWebUrl: this.requestMetadataKeyValue(props.keys.visualizer.web.external),
                     layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
                     layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
                     languageCookieName: this.requestMetadataKeyValue(props.keys.languageCookieName),
-					appVersion: of(props.appVersion)
+                    defaultCategoryScheme: this.requestMetadataKeyValue(props.keys.defaultCategoryScheme),
+					appVersion: of(props.appVersion),
                 };
 
                 // load all properties at the same time
@@ -117,6 +121,14 @@ export class PropertiesService {
         return this.properties.statisticalOperationsExternalApiUrl;
     }
 
+    getStructuralResourcesExternalApiUrl(): string {
+        return this.properties.structuralResourcesExternalApiUrl;
+    }
+
+    getDefaultCategoryScheme(): string {
+        return this.properties.defaultCategoryScheme;
+    }
+
     getVisualizerWebUrl(): string {
         return this.properties.visualizerWebUrl;
     }
@@ -128,7 +140,7 @@ export class PropertiesService {
     getLanguageCookieName() {
         return this.properties.languageCookieName;
     }
-	
+
 	getAppVersion(): string {
         return this.properties.appVersion;
     }

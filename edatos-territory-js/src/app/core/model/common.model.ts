@@ -5,6 +5,8 @@ export enum Kind {
     DATASETS = "statisticalResources#datasets",
     OPERATION = "statisticalResources#operation",
     OPERATIONS = "statisticalResources#operations",
+    CATEGORIES = "structuralResources#categories",
+    CATEGORY = "structuralResources#category",
     PROPERTY = "commonMetadata#property",
 }
 
