@@ -37,7 +37,7 @@ export class TerritoryDetailComponent implements OnInit {
 
     init(territoryId: string) {
         this.territoryId = territoryId;
-
+        this.loading = true;
         this.datasetService
             .getAllDatasetsByTerritoryVariableElementId(this.territoryId)
             .pipe(finalize(() => (this.loading = false)))
