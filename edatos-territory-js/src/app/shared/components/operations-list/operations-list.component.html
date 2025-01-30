@@ -1,4 +1,4 @@
-<p-tree [value]="tree" [loading]="loading">
+<p-tree [value]="tree">
     <ng-template let-node pTemplate="default">
         {{ node.label }}
         <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>

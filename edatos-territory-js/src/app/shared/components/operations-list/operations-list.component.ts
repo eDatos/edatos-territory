@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
 import { Categories, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
@@ -15,7 +15,7 @@ import { finalize, forkJoin } from "rxjs";
     templateUrl: "./operations-list.component.html",
     styleUrls: ["./operations-list.component.scss"],
 })
-export class OperationsListComponent implements OnInit {
+export class OperationsListComponent implements OnChanges {
     /**
      * Variable element ID of the territory.
      */
@@ -26,7 +26,9 @@ export class OperationsListComponent implements OnInit {
     territoryId?: string;
 
     tree: TreeNode[] = [];
-    loading = true;
+
+    @Output()
+    loadingChange = new EventEmitter<boolean>();
 
     private subjectAreas: Resource[] = [];
 
@@ -35,6 +37,20 @@ export class OperationsListComponent implements OnInit {
         private operationsService: OperationService,
         private srmService: SrmService,
     ) {
+    }
+
+    ngOnChanges(): void {
+        this.loadingChange.emit(true);
+
+        const operations = this.operationsService.getListOfOperations();
+        const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
+
+        forkJoin([operations, defaultSubjectAreas])
+            .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
+                const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
+                this.tree = this.createTree(operations, subjectAreas);
+                this.loadingChange.emit(false)
+            });
     }
 
     private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
@@ -60,18 +76,6 @@ export class OperationsListComponent implements OnInit {
         }
 
         return operations;
-    }
-
-    ngOnInit(): void {
-        const operations = this.operationsService.getListOfOperations();
-        const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
-
-        forkJoin([operations, defaultSubjectAreas])
-            .pipe(finalize(() => (this.loading = false)))
-            .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
-                const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
-                this.tree = this.createTree(operations, subjectAreas);
-            });
     }
 
     private createTree(operations: StatisticalOperation[], allSubjectAreas: Categories) {
