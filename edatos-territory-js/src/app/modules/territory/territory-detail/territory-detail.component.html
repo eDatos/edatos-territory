@@ -1,5 +1,4 @@
 <h1>{{ "nodes." + territoryId | translate }}</h1>
-<app-operations-list *ngIf="!loading; else spinner" [datasets]="resources" [territoryId]="territoryId"></app-operations-list>
-<ng-template #spinner>
-    <p-progressSpinner></p-progressSpinner>
-</ng-template>
+<app-operations-list *ngIf="resources" [ngStyle]="{'display': loading ? 'none' : 'block'}" [datasets]="resources" [territoryId]="territoryId"
+                     (loadingChange)="loading = $event"></app-operations-list>
+<p-progressSpinner *ngIf="loading"></p-progressSpinner>
