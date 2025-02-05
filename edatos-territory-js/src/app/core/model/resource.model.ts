@@ -39,9 +39,6 @@ export class Resources {
     public limit?: number;
     public offset?: number;
     public selfLink!: string;
-
-    public nextLink?: string;
-    public lastLink?: string;
 }
 
 export class ResourcesWithStatisticalOperation extends Resources {
