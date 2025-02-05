@@ -42,7 +42,7 @@ export class TerritoryDetailComponent implements OnInit {
         this.datasetService
             .getAllDatasetsByTerritoryVariableElementId(this.territoryId)
             .subscribe((resources) => {
-                this.resources = resources.resource;
+                this.resources = resources.resource.flatMap((resource) => resource.relatedResources.resource);
             });
     }
 }

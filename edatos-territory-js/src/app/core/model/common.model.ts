@@ -8,6 +8,7 @@ export enum Kind {
     CATEGORIES = "structuralResources#categories",
     CATEGORY = "structuralResources#category",
     PROPERTY = "commonMetadata#property",
+    RESOURCES = "statisticalResources#resources"
 }
 
 export class SelfLink {

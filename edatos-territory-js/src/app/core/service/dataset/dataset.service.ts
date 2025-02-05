@@ -3,7 +3,7 @@ import { Injectable } from "@angular/core";
 
 import { forkJoin, map, Observable, of, switchMap } from "rxjs";
 
-import { ResourcesWithStatisticalOperation, ResourcesWithStatisticalOperationNoHateoas } from "@app/core/model";
+import { CacheResources } from "@app/core/model";
 import { instantiate, PropertiesService } from "@app/core/service";
 
 @Injectable({
@@ -29,10 +29,10 @@ export class DatasetService {
      */
     getAllDatasetsByTerritoryVariableElementId(
         variableElementId: string
-    ): Observable<ResourcesWithStatisticalOperationNoHateoas> {
+    ): Observable<CacheResources> {
         return this.getDatasetsByTerritoryVariableElementId(variableElementId).pipe(
-            instantiate(ResourcesWithStatisticalOperationNoHateoas),
-            switchMap((firstResponse: ResourcesWithStatisticalOperationNoHateoas) => {
+            instantiate(CacheResources),
+            switchMap((firstResponse: CacheResources) => {
                 const total = firstResponse.total;
 
                 const requestsNeeded = Math.ceil(total / DatasetService.LIMIT);
@@ -60,8 +60,12 @@ export class DatasetService {
     getDatasetsByTerritoryVariableElementId(
         variableElementId: string,
         offset = 0
-    ): Observable<ResourcesWithStatisticalOperation> {
-        const url = `${DatasetService.REST_URL}/resources.json?query=GEOCOV_VARELEM_ID eq '${variableElementId}' AND IS_LAST_VERSION EQ 'true'&limit=${DatasetService.LIMIT}&offset=${offset}`;
-        return this.http.get(url).pipe(instantiate(ResourcesWithStatisticalOperation));
+    ): Observable<CacheResources> {
+        const url = new URL(`${DatasetService.REST_URL}/resources.json`);
+        url.searchParams.append("query", `GEOCOV_VARELEM_ID eq '${variableElementId}'`);
+        url.searchParams.append("fields", "-relatedResourcesWithoutSelectedCriteria,+operationTitle");
+        url.searchParams.append("limit", DatasetService.LIMIT.toString());
+        url.searchParams.append("offset", offset.toString());
+        return this.http.get(url.toString()).pipe(instantiate(CacheResources));
     }
 }

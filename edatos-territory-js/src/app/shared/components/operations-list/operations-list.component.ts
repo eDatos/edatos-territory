@@ -58,16 +58,16 @@ export class OperationsListComponent implements OnChanges {
         if (this.datasets) {
             this.datasets.forEach((dataset) => {
                 if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
-                    const subjectArea = operationsWithSubjectArea.operation.find(
+                    const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
                         (res) => res.id === dataset.statisticalOperation.id,
-                    )?.subjectArea; // subjectArea should always be present
-                    if (subjectArea) {
+                    );
+                    if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
                         operations.push(
                             new StatisticalOperation(
-                                dataset.statisticalOperation.id,
-                                dataset.statisticalOperation.urn,
-                                dataset.statisticalOperation.name,
-                                subjectArea,
+                                operationWithSubjectArea.id,
+                                operationWithSubjectArea.urn,
+                                operationWithSubjectArea.name,
+                                operationWithSubjectArea.subjectArea,
                             ),
                         );
                     }

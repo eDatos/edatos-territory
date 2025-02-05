@@ -2,6 +2,15 @@ import { Type } from "class-transformer";
 
 import { InternationalString, Kind, SelfLink, StatisticalOperation } from "@app/core/model";
 
+export class Resources {
+    public kind?: Kind;
+
+    public total!: number;
+    public limit?: number;
+    public offset?: number;
+    public selfLink?: string;
+}
+
 export class Resource {
     public id!: string;
     public nestedId!: string;
@@ -32,26 +41,21 @@ export class ResourceWithSubjectArea extends Resource {
     public subjectArea!: Resource;
 }
 
-export class Resources {
-    public kind!: Kind;
+export class CacheResources extends Resources {
+    @Type(() => CacheResource)
+    public resource!: CacheResource[];
+}
+export class CacheResource {
+    @Type(() => ResourceWithStatisticalOperation)
+    public mainResource!: ResourceWithStatisticalOperation;
 
-    public total!: number;
-    public limit?: number;
-    public offset?: number;
-    public selfLink!: string;
+    @Type(() => ResourcesWithStatisticalOperation)
+    public relatedResources!: ResourcesWithStatisticalOperation;
 }
 
 export class ResourcesWithStatisticalOperation extends Resources {
     @Type(() => ResourceWithStatisticalOperation)
     public resource!: ResourceWithStatisticalOperation[];
-}
-
-export class ResourcesWithStatisticalOperationNoHateoas {
-    @Type(() => ResourceWithStatisticalOperation)
-    public resource!: ResourceWithStatisticalOperation[];
-
-    public kind!: Kind;
-    public total!: number;
 }
 
 export class OperationsWithSubjectArea extends Resources {
