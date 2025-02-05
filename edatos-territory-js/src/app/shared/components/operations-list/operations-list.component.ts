@@ -1,14 +1,14 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { Categories, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
+import { CacheResource, Categories, Kind, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
 import { OperationService } from "@app/core/service";
 import { SrmService } from "@app/core/service/srm/srm.service";
 
 import { TranslateService } from "@ngx-translate/core";
 
 import { TreeNode } from "primeng/api";
-import { finalize, forkJoin } from "rxjs";
+import { forkJoin } from "rxjs";
 
 @Component({
     selector: "app-operations-list",
@@ -20,7 +20,7 @@ export class OperationsListComponent implements OnChanges {
      * Variable element ID of the territory.
      */
     @Input()
-    datasets?: ResourceWithStatisticalOperation[];
+    resources?: CacheResource[];
 
     @Input()
     territoryId?: string;
@@ -31,6 +31,7 @@ export class OperationsListComponent implements OnChanges {
     loadingChange = new EventEmitter<boolean>();
 
     private subjectAreas: Resource[] = [];
+    private datasets?: ResourceWithStatisticalOperation[];
 
     constructor(
         private translateService: TranslateService,
@@ -41,6 +42,7 @@ export class OperationsListComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.loadingChange.emit(true);
+        this.datasets = this.resources?.flatMap((resource) => resource.relatedResources.resource);
 
         const operations = this.operationsService.getListOfOperations();
         const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
@@ -55,25 +57,23 @@ export class OperationsListComponent implements OnChanges {
 
     private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
         const operations: StatisticalOperation[] = [];
-        if (this.datasets) {
-            this.datasets.forEach((dataset) => {
-                if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
-                    const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
+        this.datasets?.forEach((dataset) => {
+            if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
+                const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
                         (res) => res.id === dataset.statisticalOperation.id,
-                    );
-                    if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
-                        operations.push(
-                            new StatisticalOperation(
-                                operationWithSubjectArea.id,
-                                operationWithSubjectArea.urn,
-                                operationWithSubjectArea.name,
+                );
+                if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
+                    operations.push(
+                        new StatisticalOperation(
+                            operationWithSubjectArea.id,
+                            operationWithSubjectArea.urn,
+                            operationWithSubjectArea.name,
                                 operationWithSubjectArea.subjectArea,
                             ),
-                        );
-                    }
+                    );
                 }
-            });
-        }
+            }
+        });
 
         return operations;
     }
@@ -154,7 +154,7 @@ export class OperationsListComponent implements OnChanges {
         return url.toString();
     }
 
-    private toTreeNodeList(siemacResource: { urn: string; getName: Function }[]): TreeNode[] {
+    private toTreeNodeList(siemacResource: { urn: string; getName: Function, kind: Kind }[]): TreeNode[] {
         const children = [];
         for (const elem of siemacResource) {
             const isDataset = elem instanceof Resource;

@@ -4,7 +4,7 @@ import { ActivatedRoute } from "@angular/router";
 
 import { TranslateService } from "@ngx-translate/core";
 
-import { ResourceWithStatisticalOperation } from "@app/core/model";
+import { CacheResource } from "@app/core/model";
 import { DatasetService } from "@app/core/service";
 
 @Component({
@@ -13,7 +13,7 @@ import { DatasetService } from "@app/core/service";
     styleUrls: ["./territory-detail.component.scss"],
 })
 export class TerritoryDetailComponent implements OnInit {
-    resources?: ResourceWithStatisticalOperation[];
+    resources?: CacheResource[];
     loading = true;
     territoryId?: string;
 
@@ -42,7 +42,7 @@ export class TerritoryDetailComponent implements OnInit {
         this.datasetService
             .getAllDatasetsByTerritoryVariableElementId(this.territoryId)
             .subscribe((resources) => {
-                this.resources = resources.resource.flatMap((resource) => resource.relatedResources.resource);
+                this.resources = resources.resource;
             });
     }
 }

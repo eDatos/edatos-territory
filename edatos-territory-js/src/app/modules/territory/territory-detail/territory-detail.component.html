@@ -1,4 +1,4 @@
 <h1>{{ "nodes." + territoryId | translate }}</h1>
-<app-operations-list *ngIf="resources" [ngStyle]="{'display': loading ? 'none' : 'block'}" [datasets]="resources" [territoryId]="territoryId"
+<app-operations-list *ngIf="resources" [ngStyle]="{'display': loading ? 'none' : 'block'}" [resources]="resources" [territoryId]="territoryId"
                      (loadingChange)="loading = $event"></app-operations-list>
 <p-progressSpinner *ngIf="loading"></p-progressSpinner>
