@@ -5,7 +5,7 @@ import { ActivatedRoute } from "@angular/router";
 import { TranslateService } from "@ngx-translate/core";
 
 import { CacheResource } from "@app/core/model";
-import { DatasetService } from "@app/core/service";
+import { StatisticalResourcesService } from "@app/core/service";
 
 @Component({
     selector: "app-territory-info",
@@ -19,7 +19,7 @@ export class TerritoryDetailComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private datasetService: DatasetService,
+        private datasetService: StatisticalResourcesService,
         private translateService: TranslateService,
         private title: Title,
     ) {}

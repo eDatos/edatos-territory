@@ -9,7 +9,7 @@ import { instantiate, PropertiesService } from "@app/core/service";
 @Injectable({
     providedIn: "root",
 })
-export class DatasetService {
+export class StatisticalResourcesService {
     public static REST_URL: string;
     private static LIMIT = 1000;
 
@@ -17,7 +17,7 @@ export class DatasetService {
         private http: HttpClient,
         private propertiesService: PropertiesService
     ) {
-        DatasetService.REST_URL = this.propertiesService.getStatisticalResourcesExternalApiUrl() + "/v1.0";
+        StatisticalResourcesService.REST_URL = this.propertiesService.getStatisticalResourcesExternalApiUrl() + "/v1.0";
     }
 
     /**
@@ -35,12 +35,12 @@ export class DatasetService {
             switchMap((firstResponse: CacheResources) => {
                 const total = firstResponse.total;
 
-                const requestsNeeded = Math.ceil(total / DatasetService.LIMIT);
+                const requestsNeeded = Math.ceil(total / StatisticalResourcesService.LIMIT);
                 if (requestsNeeded <= 1) {
                     return of(firstResponse);
                 }
 
-                const requests = Array.from({ length: requestsNeeded }, (_, i) => i * DatasetService.LIMIT)
+                const requests = Array.from({ length: requestsNeeded }, (_, i) => i * StatisticalResourcesService.LIMIT)
                     .slice(1) // slice the first element since it corresponds with the first request already fetched
                     .map((offset) => this.getDatasetsByTerritoryVariableElementId(variableElementId, offset));
 
@@ -61,10 +61,10 @@ export class DatasetService {
         variableElementId: string,
         offset = 0
     ): Observable<CacheResources> {
-        const url = new URL(`${DatasetService.REST_URL}/resources.json`);
+        const url = new URL(`${StatisticalResourcesService.REST_URL}/resources.json`);
         url.searchParams.append("query", `GEOCOV_VARELEM_ID eq '${variableElementId}'`);
         url.searchParams.append("fields", "-relatedResourcesWithoutSelectedCriteria,+operationTitle");
-        url.searchParams.append("limit", DatasetService.LIMIT.toString());
+        url.searchParams.append("limit", StatisticalResourcesService.LIMIT.toString());
         url.searchParams.append("offset", offset.toString());
         return this.http.get(url.toString()).pipe(instantiate(CacheResources));
     }
