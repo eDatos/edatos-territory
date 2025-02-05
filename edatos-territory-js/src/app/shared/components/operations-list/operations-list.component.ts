@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { CacheResource, Categories, Kind, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
+import { CacheResource, Categories, Kind, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
 import { OperationService } from "@app/core/service";
 import { SrmService } from "@app/core/service/srm/srm.service";
 
@@ -49,18 +49,18 @@ export class OperationsListComponent implements OnChanges {
 
         forkJoin([operations, defaultSubjectAreas])
             .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
-                const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
+                const operations = this.getAllOperationsFromCollections(operationsWithSubjectArea);
                 this.tree = this.createTree(operations, subjectAreas);
                 this.loadingChange.emit(false)
             });
     }
 
-    private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
+    private getAllOperationsFromCollections(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
         const operations: StatisticalOperation[] = [];
-        this.datasets?.forEach((dataset) => {
-            if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
+        this.resources?.forEach((resource) => {
+            if (!operations.find((op) => op.urn === resource.mainResource.statisticalOperation.urn)) {
                 const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
-                        (res) => res.id === dataset.statisticalOperation.id,
+                    (res) => res.id === resource.mainResource.statisticalOperation.id,
                 );
                 if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
                     operations.push(
@@ -100,7 +100,7 @@ export class OperationsListComponent implements OnChanges {
             const childOperations = nestedOperations.filter((operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId);
 
             // show first operations, then subject areas
-            const children = this.toTreeNodeList(childOperations);
+            const children = this.toTreeNodeListOperations(childOperations);
 
             if (nestedOperations.length > childOperations.length) {
                 // expand branch to add remaining operations if there are still nested operations but none of then is a direct child
@@ -154,27 +154,50 @@ export class OperationsListComponent implements OnChanges {
         return url.toString();
     }
 
-    private toTreeNodeList(siemacResource: { urn: string; getName: Function, kind: Kind }[]): TreeNode[] {
+    private toTreeNodeListOperations(operations: StatisticalOperation[]): TreeNode[] {
         const children = [];
-        for (const elem of siemacResource) {
-            const isDataset = elem instanceof Resource;
+        for (const elem of operations) {
             const node: TreeNode = {
                 key: elem.urn,
-                label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang),
+                label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
                 data: elem,
-                leaf: isDataset,
-                type: isDataset ? "dataset" : undefined,
+                leaf: false,
             };
             children.push(node);
-            if (!isDataset) {
-                node.children = this.toTreeNodeList(this.getDatasetsByStatisticalOperation(elem.urn));
-            }
+            node.children = this.toTreeNodeListCollections(elem.urn);
         }
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    private getDatasetsByStatisticalOperation(statisticalOperationUrn: string): Resource[] {
-        return this.datasets?.filter((dataset) => dataset.statisticalOperation?.urn === statisticalOperationUrn) || [];
+    private toTreeNodeListCollections(statisticalOperationUrn: string): TreeNode[] {
+        const collections = this.resources?.filter((resource) => resource.mainResource.statisticalOperation.urn === statisticalOperationUrn) || [];
+        const children = [];
+        for (const elem of collections) {
+            const node: TreeNode = {
+                key: elem.mainResource.urn,
+                label: elem.mainResource.getName(this.translateService.currentLang) || undefined,
+                data: elem,
+                leaf: false,
+            };
+            children.push(node);
+            node.children = this.toTreeNodeListDatasets(elem.relatedResources);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
+    }
+
+    private toTreeNodeListDatasets(datasets: ResourcesWithStatisticalOperation) {
+        const children = [];
+        for (const elem of datasets.resource) {
+            const node: TreeNode = {
+                key: elem.urn,
+                label: elem.getName(this.translateService.currentLang) || undefined,
+                data: elem,
+                leaf: true,
+                type: "dataset",
+            };
+            children.push(node);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
     private isJaxiDataset(url: string) {
