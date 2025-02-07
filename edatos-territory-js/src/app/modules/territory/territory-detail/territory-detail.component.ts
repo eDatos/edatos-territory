@@ -3,7 +3,6 @@ import { Title } from "@angular/platform-browser";
 import { ActivatedRoute } from "@angular/router";
 
 import { TranslateService } from "@ngx-translate/core";
-import { finalize } from "rxjs";
 
 import { ResourceWithStatisticalOperation } from "@app/core/model";
 import { DatasetService } from "@app/core/service";
@@ -15,33 +14,33 @@ import { DatasetService } from "@app/core/service";
 })
 export class TerritoryDetailComponent implements OnInit {
     resources?: ResourceWithStatisticalOperation[];
-    loading = false;
+    loading = true;
     territoryId?: string;
 
     constructor(
         private route: ActivatedRoute,
         private datasetService: DatasetService,
         private translateService: TranslateService,
-        private title: Title
+        private title: Title,
     ) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
-            const territoryId = params["territoryId"];
-            const territoryName = this.translateService.instant(`nodes.${territoryId}`);
-            const title = this.translateService.instant("territory.page.title", { territory: territoryName });
-            this.title.setTitle(title);
-            this.init(territoryId);
+            this.init(params["territoryId"]);
         });
     }
 
     init(territoryId: string) {
-        this.loading = true;
         this.territoryId = territoryId;
+        this.loading = true;
 
+        const territoryName = this.translateService.instant(`nodes.${this.territoryId}`);
+        const title = this.translateService.instant("territory.page.title", { territory: territoryName });
+        this.title.setTitle(title);
+
+        this.resources = undefined; // prevents multiple calls to ngOnChanges
         this.datasetService
             .getAllDatasetsByTerritoryVariableElementId(this.territoryId)
-            .pipe(finalize(() => (this.loading = false)))
             .subscribe((resources) => {
                 this.resources = resources.resource;
             });
