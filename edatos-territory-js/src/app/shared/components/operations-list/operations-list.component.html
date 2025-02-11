@@ -1,10 +1,30 @@
-<p-tree [value]="tree">
+<p-tree [value]="tree" (onNodeExpand)="onNodeExpand($event)">
     <ng-template let-node pTemplate="default">
-        {{ node.label }}
         <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
+        {{ node.label }}
+    </ng-template>
+    <ng-template let-node pTemplate="subject-area">
+        <i *ngIf="!node.loading" aria-hidden="true" class="fa fa-glass"></i>
+        <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
+        {{ node.label }}
+    </ng-template>
+    <ng-template let-node pTemplate="operation">
+        <i *ngIf="!node.loading" aria-hidden="true" class="fa fa-balance-scale"></i>
+        <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
+        {{ node.label }}
+    </ng-template>
+    <ng-template let-node pTemplate="collection">
+        <i *ngIf="!node.loading" aria-hidden="true" class="fa fa-anchor"></i>
+        <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
+        {{ node.label }}
+    </ng-template>
+    <ng-template let-node pTemplate="collection-node">
+        <i *ngIf="!node.loading" aria-hidden="true" class="fa fa-bomb"></i>
+        <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
+        {{ node.label }}
     </ng-template>
     <ng-template let-node pTemplate="dataset">
-        <a class="underline-link" [href]="getVisualizerUrl(node.data.id)" target="_blank" (click)="registerMatomo($event)">
+        <a class="underline-link" [href]="getVisualizerUrl(node.data)" target="_blank" (click)="registerMatomo($event)">
             <span aria-hidden="true" class="fa fa-table"></span>
             {{ node.label }}
         </a>

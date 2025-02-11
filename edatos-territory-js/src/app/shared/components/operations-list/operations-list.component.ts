@@ -1,14 +1,20 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { CacheResource, Categories, Kind, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
-import { OperationService } from "@app/core/service";
+import { CacheResource, Categories, Collection, CollectionNode, CollectionNodes, OperationsWithSubjectArea, Resource, StatisticalOperation } from "@app/core/model";
+import { OperationService, StatisticalResourcesService } from "@app/core/service";
 import { SrmService } from "@app/core/service/srm/srm.service";
 
 import { TranslateService } from "@ngx-translate/core";
 
 import { TreeNode } from "primeng/api";
-import { forkJoin } from "rxjs";
+import { finalize, forkJoin } from "rxjs";
+
+declare module "primeng/api" {
+    interface TreeNode {
+        loading?: boolean;
+    }
+}
 
 @Component({
     selector: "app-operations-list",
@@ -31,10 +37,10 @@ export class OperationsListComponent implements OnChanges {
     loadingChange = new EventEmitter<boolean>();
 
     private subjectAreas: Resource[] = [];
-    private datasets?: ResourceWithStatisticalOperation[];
 
     constructor(
         private translateService: TranslateService,
+        private statisticalResourcesService: StatisticalResourcesService,
         private operationsService: OperationService,
         private srmService: SrmService,
     ) {
@@ -42,7 +48,6 @@ export class OperationsListComponent implements OnChanges {
 
     ngOnChanges(): void {
         this.loadingChange.emit(true);
-        this.datasets = this.resources?.flatMap((resource) => resource.relatedResources.resource);
 
         const operations = this.operationsService.getListOfOperations();
         const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
@@ -113,6 +118,7 @@ export class OperationsListComponent implements OnChanges {
                 label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
                 data: parentSubjectArea,
                 leaf: false,
+                type: "subject-area",
                 children,
             };
             level.push(node)
@@ -141,12 +147,11 @@ export class OperationsListComponent implements OnChanges {
         return true;
     }
 
-    getVisualizerUrl(datasetId: string): string {
-        let dataset = this.datasets!.find((dataset) => dataset.id === datasetId);
-        if (!dataset?.visualizerHtmlLink) {
-            throw Error("dataset has invalid format: no visualizerHtmlLink")
+    getVisualizerUrl(resource: { visualizerHtmlLink: string }): string {
+        if (!resource?.visualizerHtmlLink) {
+            throw Error("element has invalid format: no visualizerHtmlLink")
         }
-        let url = new URL(dataset!.visualizerHtmlLink);
+        let url = new URL(resource.visualizerHtmlLink);
         if (this.territoryId) {
             const paramName = this.isJaxiDataset(url.toString()) ? JAXI_TERRITORY_QUERY_KEY : VISUALIZER_TERRITORY_QUERY_KEY;
             url.searchParams.set(paramName, this.territoryId);
@@ -162,6 +167,7 @@ export class OperationsListComponent implements OnChanges {
                 label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
                 data: elem,
                 leaf: false,
+                type: "operation",
             };
             children.push(node);
             node.children = this.toTreeNodeListCollections(elem.urn);
@@ -178,23 +184,42 @@ export class OperationsListComponent implements OnChanges {
                 label: elem.mainResource.getName(this.translateService.currentLang) || undefined,
                 data: elem,
                 leaf: false,
+                type: "collection",
             };
             children.push(node);
-            node.children = this.toTreeNodeListDatasets(elem.relatedResources);
         }
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    private toTreeNodeListDatasets(datasets: ResourcesWithStatisticalOperation) {
+    onNodeExpand(event: { node: TreeNode, originalEvent: PointerEvent }) {
+        const node = event.node;
+        if (node.type === "collection" && node.children === undefined) {
+            node.loading = true;
+            this.statisticalResourcesService
+                .getCollectionByUrn(node.data.mainResource.urn)
+                .pipe(finalize(() => node.loading = false))
+                .subscribe((collection) => {
+                    node.children = this.toTreeNodeListCollection(collection.data.nodes);
+                });
+        }
+    }
+
+    private toTreeNodeListCollection(nodes: CollectionNodes): TreeNode[] {
         const children = [];
-        for (const elem of datasets.resource) {
+        for (const elem of nodes.node) {
             const node: TreeNode = {
-                key: elem.urn,
-                label: elem.getName(this.translateService.currentLang) || undefined,
-                data: elem,
-                leaf: true,
-                type: "dataset",
+                key: elem.getElemKey(),
+                label: elem.name.get(this.translateService.currentLang) || undefined,
             };
+            if (elem.nodes) {
+                node.leaf = false;
+                node.type = "collection-node";
+                node.children = this.toTreeNodeListCollection(elem.nodes);
+            } else {
+                node.leaf = true;
+                node.type = "dataset";
+                node.data = elem.getResource();
+            }
             children.push(node);
         }
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);

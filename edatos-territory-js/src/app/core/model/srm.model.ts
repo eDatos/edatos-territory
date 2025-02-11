@@ -1,7 +1,7 @@
-import { Resource, Resources } from "@app/core/model";
+import { Hateoas, Resource } from "@app/core/model";
 import { Type } from "class-transformer";
 
-export class Categories extends Resources {
+export class Categories extends Hateoas {
     @Type(() => Resource)
     public category!: Resource[];
 }

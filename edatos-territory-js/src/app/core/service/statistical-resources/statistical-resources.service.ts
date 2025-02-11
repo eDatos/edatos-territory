@@ -3,8 +3,8 @@ import { Injectable } from "@angular/core";
 
 import { forkJoin, map, Observable, of, switchMap } from "rxjs";
 
-import { CacheResources } from "@app/core/model";
-import { instantiate, PropertiesService } from "@app/core/service";
+import { CacheResources, Collection } from "@app/core/model";
+import { instantiate, PropertiesService, splitUrnScheme } from "@app/core/service";
 
 @Injectable({
     providedIn: "root",
@@ -18,6 +18,11 @@ export class StatisticalResourcesService {
         private propertiesService: PropertiesService
     ) {
         StatisticalResourcesService.REST_URL = this.propertiesService.getStatisticalResourcesExternalApiUrl() + "/v1.0";
+    }
+
+    getCollectionByUrn(urn: string): Observable<Collection> {
+        const { agency, resource } = splitUrnScheme(urn);
+        return this.http.get(`${StatisticalResourcesService.REST_URL}/collections/${agency}/${resource}`).pipe(instantiate(Collection));
     }
 
     /**
