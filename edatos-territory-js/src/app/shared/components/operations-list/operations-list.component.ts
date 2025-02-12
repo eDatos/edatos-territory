@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { CacheResource, Categories, Collection, CollectionNode, CollectionNodes, OperationsWithSubjectArea, Resource, StatisticalOperation } from "@app/core/model";
-import { OperationService, StatisticalResourcesService } from "@app/core/service";
+import { CacheResource, Categories, CollectionNodes, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
+import { OperationService, removeUrnVersion, StatisticalResourcesService } from "@app/core/service";
 import { SrmService } from "@app/core/service/srm/srm.service";
 
 import { TranslateService } from "@ngx-translate/core";
@@ -199,12 +199,12 @@ export class OperationsListComponent implements OnChanges {
                 .getCollectionByUrn(node.data.mainResource.urn)
                 .pipe(finalize(() => node.loading = false))
                 .subscribe((collection) => {
-                    node.children = this.toTreeNodeListCollection(collection.data.nodes);
+                    node.children = this.toTreeNodeListCollection(collection.data.nodes, node.data.relatedResources);
                 });
         }
     }
 
-    private toTreeNodeListCollection(nodes: CollectionNodes): TreeNode[] {
+    private toTreeNodeListCollection(nodes: CollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
         const children = [];
         for (const elem of nodes.node) {
             const node: TreeNode = {
@@ -214,10 +214,16 @@ export class OperationsListComponent implements OnChanges {
             if (elem.nodes) {
                 node.leaf = false;
                 node.type = "collection-node";
-                node.children = this.toTreeNodeListCollection(elem.nodes);
+                node.children = this.toTreeNodeListCollection(elem.nodes, relatedResources);
+                if (node.children.length === 0) {
+                    continue;
+                }
             } else {
-                node.leaf = true;
+                if (!relatedResources.resource.map(res => removeUrnVersion(res.urn)).includes(removeUrnVersion(elem.getElemKey()))) {
+                    continue;
+                }
                 node.type = "dataset";
+                node.leaf = true;
                 node.data = elem.getResource();
             }
             children.push(node);

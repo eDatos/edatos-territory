@@ -14,6 +14,13 @@ export function removeUrnPrefix(urn: string): string {
     return splitUrn[1];
 }
 
+export function removeUrnVersion(urn: string): string {
+    if (urn.length === 0) {
+        throw new Error("URN is empty");
+    }
+    return urn.indexOf("(") < 0 ? urn : urn.substring(0, urn.indexOf("(")) ;
+}
+
 export function splitUrnWithoutPrefix(identifier: string): { agency: string, resource: string, version?: string } {
     const agency = identifier.substring(0, identifier.indexOf(":"));
     if (identifier.includes("(")) {
