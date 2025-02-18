@@ -1,0 +1,47 @@
+import { InternationalString } from "@app/core/model/common.model";
+import { Type } from "class-transformer";
+
+export class JaxiInternationalString extends InternationalString {
+    public sort!: string;
+}
+
+export class JaxiCollection {
+    code!: number;
+    name!: string;
+    code_operation!: string;
+    message!: "Success";
+
+    @Type(() => JaxiCollectionData)
+    data!: JaxiCollectionData;
+
+    @Type(() => InternationalString)
+    title_operation!: InternationalString;
+
+    @Type(() => JaxiInternationalString)
+    title!: JaxiInternationalString;
+}
+
+export class JaxiCollectionData {
+    @Type(() => JaxiCollectionNodes)
+    nodes!: JaxiCollectionNodes;
+}
+
+export class JaxiCollectionNodes {
+    @Type(() => JaxiCollectionNode)
+    node!: JaxiCollectionNode[];
+}
+
+export class JaxiCollectionNode {
+    name!: string;
+    type!: string;
+
+    @Type(() => JaxiInternationalString)
+    title!: JaxiInternationalString;
+
+    @Type(() => JaxiCollectionNodes)
+    nodes?: JaxiCollectionNodes;
+
+    get nameNoExt() {
+        return this.name.substring(0, this.name.indexOf(".px"));
+    }
+}

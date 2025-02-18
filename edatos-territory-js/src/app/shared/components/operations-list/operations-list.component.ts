@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { CacheResource, Categories, CollectionNodes, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
+import { CacheResource, Categories, CollectionNodes, JaxiCollectionNodes, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
 import { OperationService, removeUrnVersion, StatisticalResourcesService } from "@app/core/service";
 import { SrmService } from "@app/core/service/srm/srm.service";
 
@@ -195,12 +195,21 @@ export class OperationsListComponent implements OnChanges {
         const node = event.node;
         if (node.type === "collection" && node.children === undefined) {
             node.loading = true;
-            this.statisticalResourcesService
-                .getCollectionByUrn(node.data.mainResource.urn)
-                .pipe(finalize(() => node.loading = false))
-                .subscribe((collection) => {
-                    node.children = this.toTreeNodeListCollection(collection.data.nodes, node.data.relatedResources);
-                });
+            if (node.data.mainResource.visualizerHtmlLink.includes("jaxi")) {
+                this.statisticalResourcesService
+                    .getJaxiCollectionByUrn(node.data.mainResource.urn)
+                    .pipe(finalize(() => node.loading = false))
+                    .subscribe((collection) => {
+                        node.children = this.toTreeNodeListJaxiCollection(collection.data.nodes, node.data.relatedResources);
+                    });
+            } else {
+                this.statisticalResourcesService
+                    .getCollectionByUrn(node.data.mainResource.urn)
+                    .pipe(finalize(() => node.loading = false))
+                    .subscribe((collection) => {
+                        node.children = this.toTreeNodeListCollection(collection.data.nodes, node.data.relatedResources);
+                    });
+            }
         }
     }
 
@@ -225,6 +234,33 @@ export class OperationsListComponent implements OnChanges {
                 node.type = "dataset";
                 node.leaf = true;
                 node.data = elem.getResource();
+            }
+            children.push(node);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
+    }
+
+    private toTreeNodeListJaxiCollection(nodes: JaxiCollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+        const children = [];
+        for (const elem of nodes.node) {
+            const node: TreeNode = {
+                key: elem.name,
+                label: elem.title.get(this.translateService.currentLang) || undefined,
+            };
+            if (elem.nodes) {
+                node.leaf = false;
+                node.type = "collection-node";
+                node.children = this.toTreeNodeListJaxiCollection(elem.nodes, relatedResources);
+                if (node.children.length === 0) {
+                    continue;
+                }
+            } else {
+                if (!relatedResources.resource.map(elem => elem.id).includes(elem.nameNoExt)) {
+                    continue;
+                }
+                node.type = "dataset";
+                node.leaf = true;
+                node.data = relatedResources.resource.find(res => res.id === elem.nameNoExt);
             }
             children.push(node);
         }
