@@ -80,6 +80,7 @@ export class PropertiesService {
                     structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
                         props.keys.structuralResources.rest.external
                     ),
+                    jaxiExternalApiUrl: this.requestMetadataKeyValue(props.keys.jaxi.rest.external),
                     visualizerWebUrl: this.requestMetadataKeyValue(props.keys.visualizer.web.external),
                     layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
                     layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
@@ -144,6 +145,10 @@ export class PropertiesService {
 
     getLanguageCookieName() {
         return this.properties.languageCookieName;
+    }
+
+    getJaxiExternalApiUrl() {
+        return this.properties.jaxiExternalApiUrl;
     }
 
     getAppVersion(): string {

@@ -19,7 +19,7 @@ export class StatisticalResourcesService {
         private propertiesService: PropertiesService,
     ) {
         StatisticalResourcesService.REST_URL = this.propertiesService.getStatisticalResourcesExternalApiUrl() + "/v1.0";
-        StatisticalResourcesService.JAXI_REST_URL = "https://proves.caib.es/ibestatamp/eterritorio/api";
+        StatisticalResourcesService.JAXI_REST_URL = this.propertiesService.getJaxiExternalApiUrl();
     }
 
     getCollectionByUrn(urn: string): Observable<Collection> {
