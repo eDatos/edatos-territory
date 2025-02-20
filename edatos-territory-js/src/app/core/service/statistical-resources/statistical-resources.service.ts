@@ -23,8 +23,12 @@ export class StatisticalResourcesService {
     }
 
     getCollectionByUrn(urn: string): Observable<Collection> {
-        const {agency, resource} = splitUrnScheme(urn);
-        return this.http.get(`${StatisticalResourcesService.REST_URL}/collections/${agency}/${resource}`).pipe(instantiate(Collection));
+        const { agency, resource } = splitUrnScheme(urn);
+        return this.http
+            .get(`${StatisticalResourcesService.REST_URL}/collections/${agency}/${resource}`, {
+                params: { fields: "-metadata" },
+            })
+            .pipe(instantiate(Collection));
     }
 
     getJaxiCollectionByUrn(urn: string): Observable<JaxiCollection> {
