@@ -25,17 +25,6 @@
         </encoder>
     </appender>
 
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOGS_HOME}/edatos-territory-${servidor}.%d{yyyy-MM-dd}.log
-            </fileNamePattern>
-        </rollingPolicy>
-        <encoder>
-            <charset>utf-8</charset>
-            <Pattern>%d %-5level [%thread] %logger{0}: %msg%n</Pattern>
-        </encoder>
-    </appender>
-
     <logger name="es.gobcan.istac.edatos_territory" level="#logback.loglevel#"/>
 
     <logger name="javax.activation" level="WARN"/>
@@ -73,9 +62,12 @@
         <resetJUL>true</resetJUL>
     </contextListener>
 
+    <logger name="territory" level="#logback.loglevel#">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
     <root level="#logback.loglevel#">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>

@@ -8,3 +8,8 @@ spring:
       matching-strategy: ant_path_matcher
   thymeleaf:
     prefix: classpath:/static/
+  web:
+    resources:
+      static-locations:
+        - file:/data/edatos/territory/conf/static/
+        - classpath:/static/
