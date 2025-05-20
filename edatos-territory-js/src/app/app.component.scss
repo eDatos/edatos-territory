@@ -1,4 +1,10 @@
-@media (min-width: 1280px) {
+@media (min-width: 700px) {
+    main {
+        margin: 0 3em;
+    }
+}
+
+@media (min-width: 1295px) {
     main {
         margin: 0 10em;
     }
