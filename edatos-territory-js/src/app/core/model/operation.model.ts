@@ -14,8 +14,8 @@ export class StatisticalOperation {
     @Type(() => Resource)
     public subjectArea: Resource;
 
-    getName(lang: string): string | null {
-        return this.name.get(lang);
+    getName(lang: string, defaultLang?: string): string | null {
+        return this.name.get(lang, defaultLang);
     }
 
     constructor(id: string, urn: string, name: InternationalString, subjectArea: Resource) {

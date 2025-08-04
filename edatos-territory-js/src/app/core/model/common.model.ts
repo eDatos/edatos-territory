@@ -46,8 +46,17 @@ export class InternationalString {
     /**
      * Returns the value in the specified language.
      * @param lang Language code according to ISO 639‑1.
+     * @param defaultLang Optional language code to return if the specified language is not found.
      */
-    get(lang: string): string | null {
+    get(lang: string, defaultLang?: string): string | null {
+        const text = this.findText(lang);
+        if (!text && defaultLang) {
+            return this.findText(defaultLang);
+        }
+        return text;
+    }
+
+    private findText(lang: string): string | null {
         return this.text?.find((elem) => elem.lang.toLowerCase() === lang.toLowerCase())?.value || null;
     }
 }
