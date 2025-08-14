@@ -110,7 +110,7 @@ export class OperationsListComponent implements OnChanges {
 
             const node: TreeNode = {
                 key: parentSubjectArea.urn,
-                label: parentSubjectArea.getName(this.translateService.currentLang) || undefined,
+                label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
                 data: parentSubjectArea,
                 leaf: false,
                 children,
@@ -160,7 +160,7 @@ export class OperationsListComponent implements OnChanges {
             const isDataset = elem instanceof Resource;
             const node: TreeNode = {
                 key: elem.urn,
-                label: elem.getName(this.translateService.currentLang),
+                label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang),
                 data: elem,
                 leaf: isDataset,
                 type: isDataset ? "dataset" : undefined,

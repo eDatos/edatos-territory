@@ -17,8 +17,8 @@ export class Resource {
 
     public visualizerHtmlLink?: string;
 
-    getName(lang: string): string | null {
-        return this.name.get(lang);
+    getName(lang: string, defaultLang?: string): string | null {
+        return this.name.get(lang, defaultLang);
     }
 }
 
