@@ -4,7 +4,7 @@
         <i *ngIf="node.loading" aria-hidden="true" class="fa fa-spin fa-spinner"></i>
     </ng-template>
     <ng-template let-node pTemplate="dataset">
-        <a class="underline-link" [href]="getVisualizerUrl(node.data.id)" target="_blank">
+        <a class="underline-link" [href]="getVisualizerUrl(node.data.id)" target="_blank" (click)="registerMatomo($event)">
             <span aria-hidden="true" class="fa fa-table"></span>
             {{ node.label }}
         </a>
