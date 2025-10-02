@@ -180,4 +180,9 @@ export class OperationsListComponent implements OnChanges {
     private isJaxiDataset(url: string) {
         return url.includes("tabla.do");
     }
+
+    registerMatomo($event: MouseEvent) {
+        const url = ($event.currentTarget as HTMLAnchorElement).href;
+        window._paq.push(["trackEvent", "eTerritorio", "ClickOperationLink", url]);
+    }
 }
