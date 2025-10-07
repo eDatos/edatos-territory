@@ -183,6 +183,8 @@ export class OperationsListComponent implements OnChanges {
 
     registerMatomo($event: MouseEvent) {
         const url = ($event.currentTarget as HTMLAnchorElement).href;
-        window._paq.push(["trackEvent", "eTerritorio", "ClickOperationLink", url]);
+        if (window._paq && window._paq.push) {
+            window._paq.push(["trackEvent", "eTerritorio", "ClickOperationLink", url]);
+        }
     }
 }
