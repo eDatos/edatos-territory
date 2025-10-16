@@ -1,4 +1,4 @@
-import { HttpClient, HttpClientModule } from "@angular/common/http";
+import { HttpClient, HttpClientModule, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { APP_INITIALIZER, NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
@@ -20,6 +20,7 @@ import { PropertiesService } from "@app/core/service";
 import { ErrorModule } from "@app/modules/error";
 import { LayoutModule } from "@app/modules/layout";
 import { TerritoryModule } from "@app/modules/territory";
+import { HeadersInterceptor } from "@app/core/interceptor/headers/headers.interceptor";
 
 export function createTranslateLoader(http: HttpClient) {
     return new MultiTranslateHttpLoader(http, [
@@ -72,6 +73,11 @@ export function configureTranslationService(translateService: TranslateService):
             useFactory: (ms: PropertiesService) => () => ms.init(),
             deps: [PropertiesService],
             multi: true,
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: HeadersInterceptor,
+            multi: true
         },
     ],
     bootstrap: [AppComponent],

@@ -19,7 +19,8 @@ export class HtmlService {
         return this.getComponentByUrl(this.propertiesService.getLayoutHeaderUrl(), {
             appId: "edatos-territory",
             appName,
-			appVersion: this.propertiesService.getAppVersion()
+			appVersion: this.propertiesService.getAppVersion(),
+            apiKey: this.propertiesService.apiKey
         });
     }
 

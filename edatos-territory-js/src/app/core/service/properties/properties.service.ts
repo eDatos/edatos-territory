@@ -28,6 +28,7 @@ import { ConfigService, instantiate } from "@app/core/service";
 })
 export class PropertiesService {
     private properties: any;
+    public apiKey: any;
 
     private commonMetadataUrl!: string;
 
@@ -60,30 +61,38 @@ export class PropertiesService {
                  */
                 this.commonMetadataUrl = props.endpoints.cmetadata.url;
 
-                /**
-                 * Add here the properties you need to request to common-metadata.
-                 */
-                const metadataProperties$ = {
-                    organisation: this.requestMetadataKeyValue(props.keys.organisation),
-                    statisticalResourcesExternalApiUrl: this.requestMetadataKeyValue(
-                        props.keys.statisticalResources.rest.external
-                    ),
-                    statisticalOperationsExternalApiUrl: this.requestMetadataKeyValue(
-                        props.keys.statisticalOperations.rest.external
-                    ),
-                    structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
-                        props.keys.structuralResources.rest.external
-                    ),
-                    visualizerWebUrl: this.requestMetadataKeyValue(props.keys.visualizer.web.external),
-                    layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
-                    layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
-                    languageCookieName: this.requestMetadataKeyValue(props.keys.languageCookieName),
-                    defaultCategoryScheme: this.requestMetadataKeyValue(props.keys.defaultCategoryScheme),
-					appVersion: of(props.appVersion),
-                };
+                return this.requestMetadataKeyValue(props.keys.apiKey).pipe(
+                    switchMap((apiKeyValue) => {
+                        this.apiKey = apiKeyValue;
 
-                // load all properties at the same time
-                return forkJoin(metadataProperties$).pipe(tap((res) => (this.properties = res)));
+                        /**
+                         * 
+                         * Add here the properties you need to request to common-metadata.
+                         */
+                        const metadataProperties$ = {
+                            organisation: this.requestMetadataKeyValue(props.keys.organisation),
+                            statisticalResourcesExternalApiUrl: this.requestMetadataKeyValue(
+                                props.keys.statisticalResources.rest.external
+                            ),
+                            statisticalOperationsExternalApiUrl: this.requestMetadataKeyValue(
+                                props.keys.statisticalOperations.rest.external
+                            ),
+                            structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
+                                props.keys.structuralResources.rest.external
+                            ),
+                            visualizerWebUrl: this.requestMetadataKeyValue(props.keys.visualizer.web.external),
+                            layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
+                            layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
+                            languageCookieName: this.requestMetadataKeyValue(props.keys.languageCookieName),
+                            defaultCategoryScheme: this.requestMetadataKeyValue(props.keys.defaultCategoryScheme),
+					        appVersion: of(props.appVersion),
+                            apiKey: of(apiKeyValue),
+                        };
+
+                        // load all properties at the same time
+                        return forkJoin(metadataProperties$).pipe(tap((res) => (this.properties = res)));
+                    })
+                );
             })
         );
     }
@@ -143,5 +152,9 @@ export class PropertiesService {
 
 	getAppVersion(): string {
         return this.properties.appVersion;
+    }
+
+    getApiKey(): string {
+        return this.apiKey;
     }
 }
