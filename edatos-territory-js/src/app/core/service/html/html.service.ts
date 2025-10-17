@@ -20,7 +20,7 @@ export class HtmlService {
             appId: "edatos-territory",
             appName,
 			appVersion: this.propertiesService.getAppVersion(),
-            apiKey: this.propertiesService.apiKey
+            apiKey: this.propertiesService.getApiKey()
         });
     }
 
