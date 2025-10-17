@@ -8,7 +8,6 @@
         "organisation": "metamac.organisation",
         "languageCookieName": "metamac.internationalization.cookieId",
         "defaultCategoryScheme": "metamac.srm.default.category_scheme.urn",
-        "apiKey": "edatos.territory.rest.api_key",
         "layout": {
             "header": "metamac.app.style.header.url",
             "footer": "metamac.app.style.footer.url"
@@ -34,5 +33,6 @@
             }
         }
     },
+    "apiKeyValue": "BmL1eJe4HlDvIypzFaQ40gCKV3bNajYF1prEP4gO4TCTyb3Vdv2tTmrRjRdVMpYa",
 	"appVersion": "@project.version@"
 }
