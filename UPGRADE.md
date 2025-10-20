@@ -8,13 +8,6 @@
 
 *Se deberá realizar primero la actualización de la versión 1.0.0 a la 2.0.0 y luego desde la 2.0.0 a la 3.0.0*
 
-## 1.10.1 a 1.10.2-SNAPSHOT
-* Es necesario ejecutar el siguiente script SQL, donde se incluye la api-key para llamadas a apis:
-
-```
-etc/changes-from-release/1.10.1/db/common-metadata/postgresql/20251013_create_edatos_territory_api_key.sql
-```
-
 ## 1.7.0 a 1.8.0
 
 * Se modifica el fichero de configuración para incluir dos nuevas propiedades:
