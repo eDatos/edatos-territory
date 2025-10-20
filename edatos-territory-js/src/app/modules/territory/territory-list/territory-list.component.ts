@@ -14,9 +14,7 @@ export class TerritoryListComponent implements OnInit {
     constructor(private configService: ConfigService) {}
 
     ngOnInit(): void {
-        this.configService.getTerritories().subscribe((territories) => {
-            this.init(territories);
-        });
+        this.init(this.configService.getTerritories());
     }
 
     init(territories: Territories) {

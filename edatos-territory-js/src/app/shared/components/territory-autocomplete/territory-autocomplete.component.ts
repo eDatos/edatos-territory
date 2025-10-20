@@ -46,9 +46,7 @@ export class TerritoryAutocompleteComponent implements OnInit {
                 }
             });
 
-        this.configService.getTerritories().subscribe((territories) => {
-            this.territories = this.convertToList(territories);
-        });
+        this.territories = this.convertToList(this.configService.getTerritories());
     }
 
     complete(event: { originalEvent: InputEvent; query: string }) {
