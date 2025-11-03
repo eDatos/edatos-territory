@@ -118,25 +118,20 @@
                             <resources>
                                 <resource>
                                     <directory>${project.parent.basedir}/edatos-territory-js/dist</directory>
-                                    <filtering>false</filtering>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-resources-assets</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}/static/assets</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.parent.basedir}/edatos-territory-js/dist/assets</directory>
                                     <filtering>true</filtering>
-                                </resource>
-                            </resources>
+                                    <includes>
+                                        <include>**/*.js</include>
+                                        <include>**/*.json</include>
+                                        <include>**/*.html</include>
+                                        <include>**/*.css</include>
+                                        <include>**/*.txt</include>
+                                   </includes>
+                                 </resource>
+                                 <resource>
+                                 	<directory>${project.parent.basedir}/edatos-territory-js/dist</directory>
+                                 	<filtering>false</filtering>
+                                 </resource>
+                           </resources>
                         </configuration>
                     </execution>
                 </executions>
