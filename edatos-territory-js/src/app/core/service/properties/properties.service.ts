@@ -1,9 +1,9 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 
-import { catchError, forkJoin, map, Observable, of, retry, shareReplay, tap } from "rxjs";
+import { catchError, forkJoin, map, Observable, of, retry, shareReplay, switchMap, tap } from "rxjs";
 
-import { Properties } from "@app/core/config";
+import { Config } from "@app/core/config";
 import { MetadataPropertyDto } from "@app/core/model";
 import { ConfigService, instantiate } from "@app/core/service";
 
@@ -29,15 +29,14 @@ import { ConfigService, instantiate } from "@app/core/service";
 })
 export class PropertiesService {
     private properties: any;
-
     private commonMetadataUrl!: string;
-    private config: Properties;
+    private config: Config;
 
     constructor(
         private http: HttpClient,
         private configService: ConfigService
     ) {
-        this.config = this.configService.getConfig();
+        this.config = configService.getConfig();
     }
 
     /**
@@ -56,34 +55,42 @@ export class PropertiesService {
      * @return an observable that completes after all properties are loaded.
      */
     init(): Observable<any> {
-        /**
-         * Add here the values that you need from the config file.
-         */
-        this.commonMetadataUrl = this.config.endpoints.cmetadata.url;
+        console.log("Loading app properties...");
 
-        /**
-         * Add here the properties you need to request to common-metadata.
-         */
-        const metadataProperties$ = {
-            organisation: this.requestMetadataKeyValue(this.config.keys.organisation),
-            statisticalResourcesExternalApiUrl: this.requestMetadataKeyValue(
-                this.config.keys.statisticalResources.rest.external
-            ),
-            statisticalOperationsExternalApiUrl: this.requestMetadataKeyValue(
-                this.config.keys.statisticalOperations.rest.external
-            ),
-            structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
-                this.config.keys.structuralResources.rest.external
-            ),
-            visualizerWebUrl: this.requestMetadataKeyValue(this.config.keys.visualizer.web.external),
-            layoutHeaderUrl: this.requestMetadataKeyValue(this.config.keys.layout.header),
-            layoutFooterUrl: this.requestMetadataKeyValue(this.config.keys.layout.footer),
-            languageCookieName: this.requestMetadataKeyValue(this.config.keys.languageCookieName),
-            defaultCategoryScheme: this.requestMetadataKeyValue(this.config.keys.defaultCategoryScheme),
-        };
+        return this.configService.getProperties().pipe(
+            switchMap((props) => {
+                console.log("Properties file loaded");
 
-        // load all properties at the same time
-        return forkJoin(metadataProperties$).pipe(tap((res) => (this.properties = res)));
+                /**
+                 * Add here the values that you need from the config file.
+                 */
+                this.commonMetadataUrl = props.endpoints.cmetadata.url;
+
+                /**
+                 * Add here the properties you need to request to common-metadata.
+                 */
+                const metadataProperties$ = {
+                    organisation: this.requestMetadataKeyValue(props.keys.organisation),
+                    statisticalResourcesExternalApiUrl: this.requestMetadataKeyValue(
+                        props.keys.statisticalResources.rest.external
+                    ),
+                    statisticalOperationsExternalApiUrl: this.requestMetadataKeyValue(
+                        props.keys.statisticalOperations.rest.external
+                    ),
+                    structuralResourcesExternalApiUrl: this.requestMetadataKeyValue(
+                        props.keys.structuralResources.rest.external
+                    ),
+                    visualizerWebUrl: this.requestMetadataKeyValue(props.keys.visualizer.web.external),
+                    layoutHeaderUrl: this.requestMetadataKeyValue(props.keys.layout.header),
+                    layoutFooterUrl: this.requestMetadataKeyValue(props.keys.layout.footer),
+                    languageCookieName: this.requestMetadataKeyValue(props.keys.languageCookieName),
+                    defaultCategoryScheme: this.requestMetadataKeyValue(props.keys.defaultCategoryScheme),
+                };
+
+                // load all properties at the same time
+                return forkJoin(metadataProperties$).pipe(tap((res) => (this.properties = res)));
+            })
+        );
     }
 
     requestMetadataKeyValue(key: string): Observable<string | Error> {
@@ -144,6 +151,6 @@ export class PropertiesService {
     }
 
     getApiKey(): string {
-        return this.config.apiKeyValue;
+        return this.config.apiKey;
     }
 }
