@@ -1,9 +1,12 @@
 // allows type checking for typescript
 import * as PROPERTIES from "../../../assets/properties.json";
-import * as VERSION from "../../../assets/version.json";
+import * as CONFIG from "../../../assets/config.json";
 
-type Properties = typeof PROPERTIES & typeof VERSION;
+type Properties = typeof PROPERTIES;
 export { Properties };
+
+type Config = typeof CONFIG;
+export { Config };
 
 export interface Territories {
     groups: Group[];
