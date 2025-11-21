@@ -1,14 +1,25 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
-import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { CacheResource, Categories, CollectionNodes, JaxiCollectionNodes, OperationsWithSubjectArea, Resource, ResourcesWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
-import { OperationService, removeUrnVersion, StatisticalResourcesService } from "@app/core/service";
-import { SrmService } from "@app/core/service/srm/srm.service";
+import { TreeNode } from "primeng/api";
 
 import { TranslateService } from "@ngx-translate/core";
-
-import { TreeNode } from "primeng/api";
 import { finalize, forkJoin } from "rxjs";
+
+import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
+import {
+    CacheResource,
+    Categories,
+    CollectionNodes,
+    JaxiCollectionData,
+    JaxiCollectionNode,
+    JaxiCollectionNodes,
+    OperationsWithSubjectArea,
+    Resource,
+    ResourcesWithStatisticalOperation,
+    StatisticalOperation,
+} from "@app/core/model";
+import { OperationService, removeUrnVersion, StatisticalResourcesService } from "@app/core/service";
+import { SrmService } from "@app/core/service/srm/srm.service";
 
 declare module "primeng/api" {
     interface TreeNode {
@@ -200,7 +211,7 @@ export class OperationsListComponent implements OnChanges {
                     .getJaxiCollectionByUrn(node.data.mainResource.urn)
                     .pipe(finalize(() => node.loading = false))
                     .subscribe((collection) => {
-                        node.children = this.toTreeNodeListJaxiCollection(collection.data.nodes, node.data.relatedResources);
+                        node.children = this.toTreeNodeListJaxi(collection.data, node.data.relatedResources);
                     });
             } else {
                 this.statisticalResourcesService
@@ -240,17 +251,36 @@ export class OperationsListComponent implements OnChanges {
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    private toTreeNodeListJaxiCollection(nodes: JaxiCollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+    private toTreeNodeListJaxi(jaxi: JaxiCollectionData | JaxiCollectionNode, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
         const children = [];
-        for (const elem of nodes.node) {
+        for (const elem of jaxi.files || []) {
+            const relatedResource = relatedResources.resource.find(res => res.id === elem.nameNoExt);
+            if (!relatedResource) {
+                continue; // skip files that are not in related resources because may not have info about the territory
+            }
             const node: TreeNode = {
                 key: elem.name,
-                label: elem.title.get(this.translateService.currentLang) || undefined,
+                label: relatedResource.getName(this.translateService.currentLang) || undefined,
+                leaf: true,
+                type: "dataset",
+                data: relatedResource,
+            };
+            children.push(node);
+        }
+        return [...children, ...this.toTreeNodeListJaxiCollection(jaxi.nodes, relatedResources)];
+    }
+
+    private toTreeNodeListJaxiCollection(data: JaxiCollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+        const children = [];
+        for (const elem of data.node) {
+            const node: TreeNode = {
+                key: elem.name,
+                label: elem.title?.get(this.translateService.currentLang) || elem.name || undefined,
             };
             if (elem.nodes) {
                 node.leaf = false;
                 node.type = "collection-node";
-                node.children = this.toTreeNodeListJaxiCollection(elem.nodes, relatedResources);
+                node.children = this.toTreeNodeListJaxi(elem, relatedResources);
                 if (node.children.length === 0) {
                     continue;
                 }

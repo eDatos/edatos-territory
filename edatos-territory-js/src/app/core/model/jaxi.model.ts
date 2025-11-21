@@ -15,15 +15,18 @@ export class JaxiCollection {
     data!: JaxiCollectionData;
 
     @Type(() => InternationalString)
-    title_operation!: InternationalString;
+    title_operation?: InternationalString;
 
     @Type(() => JaxiInternationalString)
-    title!: JaxiInternationalString;
+    title?: JaxiInternationalString;
 }
 
 export class JaxiCollectionData {
     @Type(() => JaxiCollectionNodes)
     nodes!: JaxiCollectionNodes;
+
+    @Type(() => JaxiCollectionFile)
+    files?: JaxiCollectionFile[];
 }
 
 export class JaxiCollectionNodes {
@@ -33,13 +36,24 @@ export class JaxiCollectionNodes {
 
 export class JaxiCollectionNode {
     name!: string;
-    type!: string;
+    type?: string;
 
     @Type(() => JaxiInternationalString)
-    title!: JaxiInternationalString;
+    title?: JaxiInternationalString;
 
     @Type(() => JaxiCollectionNodes)
-    nodes?: JaxiCollectionNodes;
+    nodes!: JaxiCollectionNodes;
+
+    @Type(() => JaxiCollectionFile)
+    files?: JaxiCollectionFile[];
+
+    get nameNoExt() {
+        return this.name.substring(0, this.name.indexOf(".px"));
+    }
+}
+
+export class JaxiCollectionFile {
+    name!: string;
 
     get nameNoExt() {
         return this.name.substring(0, this.name.indexOf(".px"));
