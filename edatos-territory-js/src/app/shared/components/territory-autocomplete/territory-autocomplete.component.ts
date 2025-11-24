@@ -42,7 +42,7 @@ export class TerritoryAutocompleteComponent implements OnInit {
             .subscribe((url) => {
                 const urlSegments = url.split("/");
                 if (urlSegments[1] === "territory" && urlSegments[2]) {
-                    this.territoryId = this.convertToTerritoryInfo(urlSegments[2]);
+                    this.territoryId = this.convertToTerritoryInfo(urlSegments[2].split("?")[0]);
                 }
             });
 
