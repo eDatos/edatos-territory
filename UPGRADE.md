@@ -8,16 +8,16 @@
 
 *Se deberá realizar primero la actualización de la versión 1.0.0 a la 2.0.0 y luego desde la 2.0.0 a la 3.0.0*
 
-## 1.11.2 a 1.11.3
-* Esta versión tiene como dependencia complementos-apps en su versión 8.20.0
-
-## 1.8.0 a 1.8.2-SNAPSHOT
+## 11.1.3 a 11.1.4-SNAPSHOT
 
 * Es necesario ejecutar el siguiente script SQL
 
 ```
-etc/changes-from-release/1.8.0/db/common-metadata/postgresql/20250219_update_common-metadata.sql
+etc/changes-from-release/11.1.3/db/common-metadata/postgresql/20250219_update_common-metadata.sql
 ```
+
+## 1.11.2 a 1.11.3
+* Esta versión tiene como dependencia complementos-apps en su versión 8.20.0
 
 ## 1.7.0 a 1.8.0
 
