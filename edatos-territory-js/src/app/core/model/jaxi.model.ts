@@ -8,14 +8,10 @@ export class JaxiInternationalString extends InternationalString {
 export class JaxiCollection {
     code!: number;
     name!: string;
-    code_operation!: string;
     message!: "Success";
 
     @Type(() => JaxiCollectionData)
     data!: JaxiCollectionData;
-
-    @Type(() => InternationalString)
-    title_operation?: InternationalString;
 
     @Type(() => JaxiInternationalString)
     title?: JaxiInternationalString;
