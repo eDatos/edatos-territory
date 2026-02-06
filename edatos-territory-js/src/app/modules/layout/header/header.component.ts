@@ -2,10 +2,9 @@ import { DOCUMENT } from "@angular/common";
 import { Component, Inject, OnInit, ViewContainerRef } from "@angular/core";
 
 import { TranslateService } from "@ngx-translate/core";
-import { CookieService } from "ngx-cookie-service";
 
-import { AVAILABLE_LANGS } from "@app/app.constants";
-import { HtmlService, PropertiesService } from "@app/core/service";
+import { AVAILABLE_LANGS, DEFAULT_LANG } from "@app/app.constants";
+import { HtmlService } from "@app/core/service";
 import { appendContextualFragment } from "@app/modules/layout";
 import { TerritoryAutocompleteComponent } from "@app/shared/components/territory-autocomplete";
 
@@ -42,6 +41,12 @@ export class HeaderComponent implements OnInit {
     }
 
     private updateLang() {
+        const defaultLanguage = Edatos.i18n.getDefaultLanguage();
+        if (defaultLanguage && AVAILABLE_LANGS.includes(defaultLanguage)) {
+            this.languageService.setDefaultLang(defaultLanguage);
+            console.debug("Default language changed to", defaultLanguage);
+        }
+
         const cookieValue = Edatos.i18n.getChosenLocaleCookie();
         if (cookieValue && AVAILABLE_LANGS.includes(cookieValue)) {
             this.languageService.use(cookieValue).subscribe(() => {

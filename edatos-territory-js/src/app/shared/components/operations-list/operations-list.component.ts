@@ -126,7 +126,7 @@ export class OperationsListComponent implements OnChanges {
 
             const node: TreeNode = {
                 key: parentSubjectArea.urn,
-                label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
+                label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
                 data: parentSubjectArea,
                 leaf: false,
                 type: "subject-area",
@@ -175,7 +175,7 @@ export class OperationsListComponent implements OnChanges {
         for (const elem of operations) {
             const node: TreeNode = {
                 key: elem.urn,
-                label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
+                label: elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
                 data: elem,
                 leaf: false,
                 type: "operation",
@@ -192,7 +192,7 @@ export class OperationsListComponent implements OnChanges {
         for (const elem of collections) {
             const node: TreeNode = {
                 key: elem.mainResource.urn,
-                label: elem.mainResource.getName(this.translateService.currentLang) || undefined,
+                label: elem.mainResource.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
                 data: elem,
                 leaf: false,
                 type: "collection",
@@ -229,7 +229,7 @@ export class OperationsListComponent implements OnChanges {
         for (const elem of nodes.node) {
             const node: TreeNode = {
                 key: elem.getElemKey(),
-                label: elem.name.get(this.translateService.currentLang) || undefined,
+                label: elem.name.get(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
             };
             if (elem.nodes) {
                 node.leaf = false;
@@ -260,7 +260,7 @@ export class OperationsListComponent implements OnChanges {
             }
             const node: TreeNode = {
                 key: elem.name,
-                label: relatedResource.getName(this.translateService.currentLang) || undefined,
+                label: relatedResource.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
                 leaf: true,
                 type: "dataset",
                 data: relatedResource,
@@ -275,7 +275,7 @@ export class OperationsListComponent implements OnChanges {
         for (const elem of data.node) {
             const node: TreeNode = {
                 key: elem.name,
-                label: elem.title?.get(this.translateService.currentLang) || elem.name || undefined,
+                label: elem.title?.get(this.translateService.currentLang, this.translateService.getDefaultLang()) || elem.name || undefined,
             };
             if (elem.nodes) {
                 node.leaf = false;
