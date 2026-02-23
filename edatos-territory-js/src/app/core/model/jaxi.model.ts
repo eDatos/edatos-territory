@@ -1,20 +1,39 @@
-import { InternationalString } from "@app/core/model/common.model";
 import { Type } from "class-transformer";
 
-export class JaxiInternationalString extends InternationalString {
-    public sort!: string;
+export abstract class JaxiResource {
+    name!: string;
+
+    "px:catalan"?: string;
+    "px:castellano"?: string;
+    "px:prefixsort"?: string;
+
+    get sort(): string | undefined {
+        return this["px:prefixsort"];
+    }
+
+    private get(locale?: string | null) {
+        switch (locale) {
+            case "ca":
+                return this["px:catalan"];
+            case "es":
+                return this["px:castellano"];
+            default:
+                return this.name;
+        }
+    }
+
+    getName(locale?: string, defaultLocale?: string): string {
+        return this.get(locale) || this.get(defaultLocale) || this.name;
+    }
 }
 
-export class JaxiCollection {
+export class JaxiCollection extends JaxiResource {
     code!: number;
-    name!: string;
-    message!: "Success";
+    code_operation!: string;
+    message!: string;
 
     @Type(() => JaxiCollectionData)
     data!: JaxiCollectionData;
-
-    @Type(() => JaxiInternationalString)
-    title?: JaxiInternationalString;
 }
 
 export class JaxiCollectionData {
@@ -22,7 +41,7 @@ export class JaxiCollectionData {
     nodes!: JaxiCollectionNodes;
 
     @Type(() => JaxiCollectionFile)
-    files?: JaxiCollectionFile[];
+    files!: JaxiCollectionFile[];
 }
 
 export class JaxiCollectionNodes {
@@ -30,28 +49,20 @@ export class JaxiCollectionNodes {
     node!: JaxiCollectionNode[];
 }
 
-export class JaxiCollectionNode {
-    name!: string;
-    type?: string;
-
-    @Type(() => JaxiInternationalString)
-    title?: JaxiInternationalString;
-
+export class JaxiCollectionNode extends JaxiResource {
     @Type(() => JaxiCollectionNodes)
     nodes!: JaxiCollectionNodes;
 
     @Type(() => JaxiCollectionFile)
-    files?: JaxiCollectionFile[];
-
-    get nameNoExt() {
-        return this.name.substring(0, this.name.indexOf(".px"));
-    }
+    files!: JaxiCollectionFile[];
 }
 
-export class JaxiCollectionFile {
-    name!: string;
+export class JaxiCollectionFile extends JaxiResource {
+    jsonLink!: string;
+    jsonStatLink!: string;
+    pxLink!: string;
 
-    get nameNoExt() {
+    get id() {
         return this.name.substring(0, this.name.indexOf(".px"));
     }
 }

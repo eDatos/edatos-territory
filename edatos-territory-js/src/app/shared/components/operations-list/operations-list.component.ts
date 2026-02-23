@@ -53,9 +53,8 @@ export class OperationsListComponent implements OnChanges {
         private translateService: TranslateService,
         private statisticalResourcesService: StatisticalResourcesService,
         private operationsService: OperationService,
-        private srmService: SrmService,
-    ) {
-    }
+        private srmService: SrmService
+    ) {}
 
     ngOnChanges(): void {
         this.loadingChange.emit(true);
@@ -63,20 +62,21 @@ export class OperationsListComponent implements OnChanges {
         const operations = this.operationsService.getListOfOperations();
         const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
 
-        forkJoin([operations, defaultSubjectAreas])
-            .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
-                const operations = this.getAllOperationsFromCollections(operationsWithSubjectArea);
-                this.tree = this.createTree(operations, subjectAreas);
-                this.loadingChange.emit(false)
-            });
+        forkJoin([operations, defaultSubjectAreas]).subscribe(([operationsWithSubjectArea, subjectAreas]) => {
+            const operations = this.getAllOperationsFromCollections(operationsWithSubjectArea);
+            this.tree = this.createTree(operations, subjectAreas);
+            this.loadingChange.emit(false);
+        });
     }
 
-    private getAllOperationsFromCollections(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
+    private getAllOperationsFromCollections(
+        operationsWithSubjectArea: OperationsWithSubjectArea
+    ): StatisticalOperation[] {
         const operations: StatisticalOperation[] = [];
         this.resources?.forEach((resource) => {
             if (!operations.find((op) => op.urn === resource.mainResource.statisticalOperation.urn)) {
                 const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
-                    (res) => res.id === resource.mainResource.statisticalOperation.id,
+                    (res) => res.id === resource.mainResource.statisticalOperation.id
                 );
                 if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
                     operations.push(
@@ -84,8 +84,8 @@ export class OperationsListComponent implements OnChanges {
                             operationWithSubjectArea.id,
                             operationWithSubjectArea.urn,
                             operationWithSubjectArea.name,
-                                operationWithSubjectArea.subjectArea,
-                            ),
+                            operationWithSubjectArea.subjectArea
+                        )
                     );
                 }
             }
@@ -96,43 +96,53 @@ export class OperationsListComponent implements OnChanges {
 
     private createTree(operations: StatisticalOperation[], allSubjectAreas: Categories) {
         this.subjectAreas = allSubjectAreas.category.sort((a, b) => a.id.localeCompare(b.id) || 0);
-        const rootAreas = this.subjectAreas.filter(subjectArea => !subjectArea.nestedId.includes("."));
+        const rootAreas = this.subjectAreas.filter((subjectArea) => !subjectArea.nestedId.includes("."));
         return this.expandBranch(operations, rootAreas);
     }
-
 
     private expandBranch(operations: StatisticalOperation[], parentSubjectAreas: Resource[]): TreeNode[] {
         const level = [];
         for (const parentSubjectArea of parentSubjectAreas) {
             // nested operations may be direct children of this parent subject area or may be deeper in the tree
             const nestedOperations = operations.filter((operation) => {
-                return this.isChildOf(operation.subjectArea, parentSubjectArea) || operation.subjectArea.nestedId === parentSubjectArea.nestedId;
+                return (
+                    this.isChildOf(operation.subjectArea, parentSubjectArea) ||
+                    operation.subjectArea.nestedId === parentSubjectArea.nestedId
+                );
             });
             if (nestedOperations.length === 0) {
                 continue; // don't show subject area if it has no operations
             }
 
             // operations that are direct children of the subject area
-            const childOperations = nestedOperations.filter((operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId);
+            const childOperations = nestedOperations.filter(
+                (operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId
+            );
 
             // show first operations, then subject areas
             const children = this.toTreeNodeListOperations(childOperations);
 
             if (nestedOperations.length > childOperations.length) {
                 // expand branch to add remaining operations if there are still nested operations but none of then is a direct child
-                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) => this.isChildOf(subjectArea, parentSubjectArea, true));
+                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) =>
+                    this.isChildOf(subjectArea, parentSubjectArea, true)
+                );
                 children.push(...this.expandBranch(nestedOperations, nestedSubjectAreas));
             }
 
             const node: TreeNode = {
                 key: parentSubjectArea.urn,
-                label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
+                label:
+                    parentSubjectArea.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
                 data: parentSubjectArea,
                 leaf: false,
                 type: "subject-area",
                 children,
             };
-            level.push(node)
+            level.push(node);
         }
         return level;
     }
@@ -160,11 +170,13 @@ export class OperationsListComponent implements OnChanges {
 
     getVisualizerUrl(resource: { visualizerHtmlLink: string }): string {
         if (!resource?.visualizerHtmlLink) {
-            throw Error("element has invalid format: no visualizerHtmlLink")
+            throw Error("element has invalid format: no visualizerHtmlLink");
         }
         let url = new URL(resource.visualizerHtmlLink);
         if (this.territoryId) {
-            const paramName = this.isJaxiDataset(url.toString()) ? JAXI_TERRITORY_QUERY_KEY : VISUALIZER_TERRITORY_QUERY_KEY;
+            const paramName = this.isJaxiDataset(url.toString())
+                ? JAXI_TERRITORY_QUERY_KEY
+                : VISUALIZER_TERRITORY_QUERY_KEY;
             url.searchParams.set(paramName, this.territoryId);
         }
         return url.toString();
@@ -175,7 +187,9 @@ export class OperationsListComponent implements OnChanges {
         for (const elem of operations) {
             const node: TreeNode = {
                 key: elem.urn,
-                label: elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
+                label:
+                    elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
                 data: elem,
                 leaf: false,
                 type: "operation",
@@ -187,12 +201,19 @@ export class OperationsListComponent implements OnChanges {
     }
 
     private toTreeNodeListCollections(statisticalOperationUrn: string): TreeNode[] {
-        const collections = this.resources?.filter((resource) => resource.mainResource.statisticalOperation.urn === statisticalOperationUrn) || [];
+        const collections =
+            this.resources?.filter(
+                (resource) => resource.mainResource.statisticalOperation.urn === statisticalOperationUrn
+            ) || [];
         const children = [];
         for (const elem of collections) {
             const node: TreeNode = {
                 key: elem.mainResource.urn,
-                label: elem.mainResource.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
+                label:
+                    elem.mainResource.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
                 data: elem,
                 leaf: false,
                 type: "collection",
@@ -202,34 +223,42 @@ export class OperationsListComponent implements OnChanges {
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    onNodeExpand(event: { node: TreeNode, originalEvent: PointerEvent }) {
+    onNodeExpand(event: { node: TreeNode; originalEvent: PointerEvent }) {
         const node = event.node;
         if (node.type === "collection" && node.children === undefined) {
             node.loading = true;
             if (node.data.mainResource.visualizerHtmlLink.includes("jaxi")) {
                 this.statisticalResourcesService
                     .getJaxiCollectionByUrn(node.data.mainResource.urn)
-                    .pipe(finalize(() => node.loading = false))
+                    .pipe(finalize(() => (node.loading = false)))
                     .subscribe((collection) => {
                         node.children = this.toTreeNodeListJaxi(collection.data, node.data.relatedResources);
                     });
             } else {
                 this.statisticalResourcesService
                     .getCollectionByUrn(node.data.mainResource.urn)
-                    .pipe(finalize(() => node.loading = false))
+                    .pipe(finalize(() => (node.loading = false)))
                     .subscribe((collection) => {
-                        node.children = this.toTreeNodeListCollection(collection.data.nodes, node.data.relatedResources);
+                        node.children = this.toTreeNodeListCollection(
+                            collection.data.nodes,
+                            node.data.relatedResources
+                        );
                     });
             }
         }
     }
 
-    private toTreeNodeListCollection(nodes: CollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+    private toTreeNodeListCollection(
+        nodes: CollectionNodes,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
         const children = [];
         for (const elem of nodes.node) {
             const node: TreeNode = {
                 key: elem.getElemKey(),
-                label: elem.name.get(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
+                label:
+                    elem.name.get(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
             };
             if (elem.nodes) {
                 node.leaf = false;
@@ -239,7 +268,11 @@ export class OperationsListComponent implements OnChanges {
                     continue;
                 }
             } else {
-                if (!relatedResources.resource.map(res => removeUrnVersion(res.urn)).includes(removeUrnVersion(elem.getElemKey()))) {
+                if (
+                    !relatedResources.resource
+                        .map((res) => removeUrnVersion(res.urn))
+                        .includes(removeUrnVersion(elem.getElemKey()))
+                ) {
                     continue;
                 }
                 node.type = "dataset";
@@ -251,16 +284,23 @@ export class OperationsListComponent implements OnChanges {
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    private toTreeNodeListJaxi(jaxi: JaxiCollectionData | JaxiCollectionNode, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+    private toTreeNodeListJaxi(
+        jaxi: JaxiCollectionData | JaxiCollectionNode,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
         const children = [];
         for (const elem of jaxi.files || []) {
-            const relatedResource = relatedResources.resource.find(res => res.id === elem.nameNoExt);
+            const relatedResource = relatedResources.resource.find((res) => res.id === elem.id);
             if (!relatedResource) {
                 continue; // skip files that are not in related resources because may not have info about the territory
             }
             const node: TreeNode = {
-                key: elem.name,
-                label: relatedResource.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) || undefined,
+                key: elem.id,
+                label:
+                    relatedResource.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
                 leaf: true,
                 type: "dataset",
                 data: relatedResource,
@@ -270,31 +310,37 @@ export class OperationsListComponent implements OnChanges {
         return [...children, ...this.toTreeNodeListJaxiCollection(jaxi.nodes, relatedResources)];
     }
 
-    private toTreeNodeListJaxiCollection(data: JaxiCollectionNodes, relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+    private toTreeNodeListJaxiCollection(
+        data: JaxiCollectionNodes,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
         const children = [];
         for (const elem of data.node) {
             const node: TreeNode = {
                 key: elem.name,
-                label: elem.title?.get(this.translateService.currentLang, this.translateService.getDefaultLang()) || elem.name || undefined,
+                label:
+                    elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
             };
             if (elem.nodes) {
                 node.leaf = false;
                 node.type = "collection-node";
                 node.children = this.toTreeNodeListJaxi(elem, relatedResources);
+                node.data = elem;
                 if (node.children.length === 0) {
                     continue;
                 }
             } else {
-                if (!relatedResources.resource.map(elem => elem.id).includes(elem.nameNoExt)) {
+                if (!relatedResources.resource.map((elem) => elem.id).includes(elem.name)) {
                     continue;
                 }
                 node.type = "dataset";
                 node.leaf = true;
-                node.data = relatedResources.resource.find(res => res.id === elem.nameNoExt);
+                node.data = relatedResources.resource.find((res) => res.id === elem.name);
             }
             children.push(node);
         }
-        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
+        return children.sort((a, b) => a.data.sort.localeCompare(b.data.sort) || 0);
     }
 
     private isJaxiDataset(url: string) {
