@@ -4,8 +4,8 @@ import { ActivatedRoute } from "@angular/router";
 
 import { TranslateService } from "@ngx-translate/core";
 
-import { ResourceWithStatisticalOperation } from "@app/core/model";
-import { DatasetService } from "@app/core/service";
+import { CacheResource } from "@app/core/model";
+import { StatisticalResourcesService } from "@app/core/service";
 
 @Component({
     selector: "app-territory-info",
@@ -13,13 +13,13 @@ import { DatasetService } from "@app/core/service";
     styleUrls: ["./territory-detail.component.scss"],
 })
 export class TerritoryDetailComponent implements OnInit {
-    resources?: ResourceWithStatisticalOperation[];
+    resources?: CacheResource[];
     loading = true;
     territoryId?: string;
 
     constructor(
         private route: ActivatedRoute,
-        private datasetService: DatasetService,
+        private datasetService: StatisticalResourcesService,
         private translateService: TranslateService,
         private title: Title,
     ) {}

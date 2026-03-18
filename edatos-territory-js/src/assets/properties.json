@@ -27,6 +27,11 @@
                 "external": "metamac.srm.rest.external"
             }
         },
+        "jaxi": {
+            "rest": {
+                "external": "edatos.jaxi.rest.external"
+            }
+        },
         "visualizer": {
             "web": {
                 "external": "metamac.portal.web.external.visualizer"

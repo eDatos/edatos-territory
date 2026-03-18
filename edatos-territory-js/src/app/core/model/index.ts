@@ -3,3 +3,4 @@ export * from './resource.model';
 export * from './operation.model';
 export * from './common-metadata.model';
 export * from './srm.model';
+export * from './jaxi.model';
