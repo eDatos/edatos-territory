@@ -3,11 +3,19 @@ import { Type } from "class-transformer";
 export enum Kind {
     DATASET = "statisticalResources#dataset",
     DATASETS = "statisticalResources#datasets",
+    MULTIDATASETS = "statisticalResources#multidatasets",
+    MULTIDATASET = "statisticalResources#multidataset",
     OPERATION = "statisticalResources#operation",
     OPERATIONS = "statisticalResources#operations",
     CATEGORIES = "structuralResources#categories",
     CATEGORY = "structuralResources#category",
+    COLLECTIONS = "statisticalResources#collections",
+    COLLECTION = "statisticalResources#collection",
+    QUERIES = "statisticalResources#queries",
+    QUERY = "statisticalResources#query",
     PROPERTY = "commonMetadata#property",
+    RESOURCES = "statisticalResources#resources",
+    URL = "statisticalResources#url"
 }
 
 export class SelfLink {

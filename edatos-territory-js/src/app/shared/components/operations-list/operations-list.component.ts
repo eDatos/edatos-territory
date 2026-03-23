@@ -1,14 +1,31 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output } from "@angular/core";
-
-import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
-import { Categories, OperationsWithSubjectArea, Resource, ResourceWithStatisticalOperation, StatisticalOperation } from "@app/core/model";
-import { OperationService } from "@app/core/service";
-import { SrmService } from "@app/core/service/srm/srm.service";
-
-import { TranslateService } from "@ngx-translate/core";
+import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core";
 
 import { TreeNode } from "primeng/api";
+
+import { TranslateService } from "@ngx-translate/core";
 import { finalize, forkJoin } from "rxjs";
+
+import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
+import {
+    CacheResource,
+    Categories,
+    CollectionNodes,
+    JaxiCollectionData,
+    JaxiCollectionNode,
+    JaxiCollectionNodes,
+    OperationsWithSubjectArea,
+    Resource,
+    ResourcesWithStatisticalOperation,
+    StatisticalOperation,
+} from "@app/core/model";
+import { OperationService, removeUrnVersion, StatisticalResourcesService } from "@app/core/service";
+import { SrmService } from "@app/core/service/srm/srm.service";
+
+declare module "primeng/api" {
+    interface TreeNode {
+        loading?: boolean;
+    }
+}
 
 @Component({
     selector: "app-operations-list",
@@ -20,7 +37,7 @@ export class OperationsListComponent implements OnChanges {
      * Variable element ID of the territory.
      */
     @Input()
-    datasets?: ResourceWithStatisticalOperation[];
+    resources?: CacheResource[];
 
     @Input()
     territoryId?: string;
@@ -34,10 +51,10 @@ export class OperationsListComponent implements OnChanges {
 
     constructor(
         private translateService: TranslateService,
+        private statisticalResourcesService: StatisticalResourcesService,
         private operationsService: OperationService,
-        private srmService: SrmService,
-    ) {
-    }
+        private srmService: SrmService
+    ) {}
 
     ngOnChanges(): void {
         this.loadingChange.emit(true);
@@ -45,77 +62,87 @@ export class OperationsListComponent implements OnChanges {
         const operations = this.operationsService.getListOfOperations();
         const defaultSubjectAreas = this.srmService.getDefaultCategorySchemeCategories();
 
-        forkJoin([operations, defaultSubjectAreas])
-            .subscribe(([operationsWithSubjectArea, subjectAreas]) => {
-                const operations = this.getAllOperationsFromDatasets(operationsWithSubjectArea);
-                this.tree = this.createTree(operations, subjectAreas);
-                this.loadingChange.emit(false)
-            });
+        forkJoin([operations, defaultSubjectAreas]).subscribe(([operationsWithSubjectArea, subjectAreas]) => {
+            const operations = this.getAllOperationsFromCollections(operationsWithSubjectArea);
+            this.tree = this.createTree(operations, subjectAreas);
+            this.loadingChange.emit(false);
+        });
     }
 
-    private getAllOperationsFromDatasets(operationsWithSubjectArea: OperationsWithSubjectArea): StatisticalOperation[] {
+    private getAllOperationsFromCollections(
+        operationsWithSubjectArea: OperationsWithSubjectArea
+    ): StatisticalOperation[] {
         const operations: StatisticalOperation[] = [];
-        if (this.datasets) {
-            this.datasets.forEach((dataset) => {
-                if (!operations.find((op) => op.urn === dataset.statisticalOperation.urn)) {
-                    const subjectArea = operationsWithSubjectArea.operation.find(
-                        (res) => res.id === dataset.statisticalOperation.id,
-                    )?.subjectArea; // subjectArea should always be present
-                    if (subjectArea) {
-                        operations.push(
-                            new StatisticalOperation(
-                                dataset.statisticalOperation.id,
-                                dataset.statisticalOperation.urn,
-                                dataset.statisticalOperation.name,
-                                subjectArea,
-                            ),
-                        );
-                    }
+        this.resources?.forEach((resource) => {
+            if (!operations.find((op) => op.urn === resource.mainResource.statisticalOperation.urn)) {
+                const operationWithSubjectArea = operationsWithSubjectArea.operation.find(
+                    (res) => res.id === resource.mainResource.statisticalOperation.id
+                );
+                if (operationWithSubjectArea && operationWithSubjectArea.subjectArea) {
+                    operations.push(
+                        new StatisticalOperation(
+                            operationWithSubjectArea.id,
+                            operationWithSubjectArea.urn,
+                            operationWithSubjectArea.name,
+                            operationWithSubjectArea.subjectArea
+                        )
+                    );
                 }
-            });
-        }
+            }
+        });
 
         return operations;
     }
 
     private createTree(operations: StatisticalOperation[], allSubjectAreas: Categories) {
         this.subjectAreas = allSubjectAreas.category.sort((a, b) => a.id.localeCompare(b.id) || 0);
-        const rootAreas = this.subjectAreas.filter(subjectArea => !subjectArea.nestedId.includes("."));
+        const rootAreas = this.subjectAreas.filter((subjectArea) => !subjectArea.nestedId.includes("."));
         return this.expandBranch(operations, rootAreas);
     }
-
 
     private expandBranch(operations: StatisticalOperation[], parentSubjectAreas: Resource[]): TreeNode[] {
         const level = [];
         for (const parentSubjectArea of parentSubjectAreas) {
             // nested operations may be direct children of this parent subject area or may be deeper in the tree
             const nestedOperations = operations.filter((operation) => {
-                return this.isChildOf(operation.subjectArea, parentSubjectArea) || operation.subjectArea.nestedId === parentSubjectArea.nestedId;
+                return (
+                    this.isChildOf(operation.subjectArea, parentSubjectArea) ||
+                    operation.subjectArea.nestedId === parentSubjectArea.nestedId
+                );
             });
             if (nestedOperations.length === 0) {
                 continue; // don't show subject area if it has no operations
             }
 
             // operations that are direct children of the subject area
-            const childOperations = nestedOperations.filter((operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId);
+            const childOperations = nestedOperations.filter(
+                (operation) => operation.subjectArea.nestedId === parentSubjectArea.nestedId
+            );
 
             // show first operations, then subject areas
-            const children = this.toTreeNodeList(childOperations);
+            const children = this.toTreeNodeListOperations(childOperations);
 
             if (nestedOperations.length > childOperations.length) {
                 // expand branch to add remaining operations if there are still nested operations but none of then is a direct child
-                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) => this.isChildOf(subjectArea, parentSubjectArea, true));
+                const nestedSubjectAreas = this.subjectAreas.filter((subjectArea) =>
+                    this.isChildOf(subjectArea, parentSubjectArea, true)
+                );
                 children.push(...this.expandBranch(nestedOperations, nestedSubjectAreas));
             }
 
             const node: TreeNode = {
                 key: parentSubjectArea.urn,
-                label: parentSubjectArea.getName(this.translateService.currentLang, this.translateService.defaultLang) || undefined,
+                label:
+                    parentSubjectArea.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
                 data: parentSubjectArea,
                 leaf: false,
+                type: "subject-area",
                 children,
             };
-            level.push(node)
+            level.push(node);
         }
         return level;
     }
@@ -141,40 +168,179 @@ export class OperationsListComponent implements OnChanges {
         return true;
     }
 
-    getVisualizerUrl(datasetId: string): string {
-        let dataset = this.datasets!.find((dataset) => dataset.id === datasetId);
-        if (!dataset?.visualizerHtmlLink) {
-            throw Error("dataset has invalid format: no visualizerHtmlLink")
+    getVisualizerUrl(resource: { visualizerHtmlLink: string }): string {
+        if (!resource?.visualizerHtmlLink) {
+            throw Error("element has invalid format: no visualizerHtmlLink");
         }
-        let url = new URL(dataset!.visualizerHtmlLink);
+        let url = new URL(resource.visualizerHtmlLink);
         if (this.territoryId) {
-            const paramName = this.isJaxiDataset(url.toString()) ? JAXI_TERRITORY_QUERY_KEY : VISUALIZER_TERRITORY_QUERY_KEY;
+            const paramName = this.isJaxiDataset(url.toString())
+                ? JAXI_TERRITORY_QUERY_KEY
+                : VISUALIZER_TERRITORY_QUERY_KEY;
             url.searchParams.set(paramName, this.territoryId);
         }
         return url.toString();
     }
 
-    private toTreeNodeList(siemacResource: { urn: string; getName: Function }[]): TreeNode[] {
+    private toTreeNodeListOperations(operations: StatisticalOperation[]): TreeNode[] {
         const children = [];
-        for (const elem of siemacResource) {
-            const isDataset = elem instanceof Resource;
+        for (const elem of operations) {
             const node: TreeNode = {
                 key: elem.urn,
-                label: elem.getName(this.translateService.currentLang, this.translateService.defaultLang),
+                label:
+                    elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
                 data: elem,
-                leaf: isDataset,
-                type: isDataset ? "dataset" : undefined,
+                leaf: false,
+                type: "operation",
             };
             children.push(node);
-            if (!isDataset) {
-                node.children = this.toTreeNodeList(this.getDatasetsByStatisticalOperation(elem.urn));
-            }
+            node.children = this.toTreeNodeListCollections(elem.urn);
         }
         return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
-    private getDatasetsByStatisticalOperation(statisticalOperationUrn: string): Resource[] {
-        return this.datasets?.filter((dataset) => dataset.statisticalOperation?.urn === statisticalOperationUrn) || [];
+    private toTreeNodeListCollections(statisticalOperationUrn: string): TreeNode[] {
+        const collections =
+            this.resources?.filter(
+                (resource) => resource.mainResource.statisticalOperation.urn === statisticalOperationUrn
+            ) || [];
+        const children = [];
+        for (const elem of collections) {
+            const node: TreeNode = {
+                key: elem.mainResource.urn,
+                label:
+                    elem.mainResource.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
+                data: elem,
+                leaf: false,
+                type: "collection",
+            };
+            children.push(node);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
+    }
+
+    onNodeExpand(event: { node: TreeNode; originalEvent: PointerEvent }) {
+        const node = event.node;
+        if (node.type === "collection" && node.children === undefined) {
+            node.loading = true;
+            if (node.data.mainResource.visualizerHtmlLink.includes("jaxi")) {
+                this.statisticalResourcesService
+                    .getJaxiCollectionByUrn(node.data.mainResource.urn)
+                    .pipe(finalize(() => (node.loading = false)))
+                    .subscribe((collection) => {
+                        node.children = this.toTreeNodeListJaxi(collection.data, node.data.relatedResources);
+                    });
+            } else {
+                this.statisticalResourcesService
+                    .getCollectionByUrn(node.data.mainResource.urn)
+                    .pipe(finalize(() => (node.loading = false)))
+                    .subscribe((collection) => {
+                        node.children = this.toTreeNodeListCollection(
+                            collection.data.nodes,
+                            node.data.relatedResources
+                        );
+                    });
+            }
+        }
+    }
+
+    private toTreeNodeListCollection(
+        nodes: CollectionNodes,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
+        const children = [];
+        for (const elem of nodes.node) {
+            const node: TreeNode = {
+                key: elem.getElemKey(),
+                label:
+                    elem.name.get(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
+            };
+            if (elem.nodes) {
+                node.leaf = false;
+                node.type = "collection-node";
+                node.children = this.toTreeNodeListCollection(elem.nodes, relatedResources);
+                if (node.children.length === 0) {
+                    continue;
+                }
+            } else {
+                if (
+                    !relatedResources.resource
+                        .map((res) => removeUrnVersion(res.urn))
+                        .includes(removeUrnVersion(elem.getElemKey()))
+                ) {
+                    continue;
+                }
+                node.type = "dataset";
+                node.leaf = true;
+                node.data = elem.getResource();
+            }
+            children.push(node);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
+    }
+
+    private toTreeNodeListJaxi(
+        jaxi: JaxiCollectionData | JaxiCollectionNode,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
+        const children = [];
+        for (const elem of jaxi.files || []) {
+            const relatedResource = relatedResources.resource.find((res) => res.id === elem.id);
+            if (!relatedResource) {
+                continue; // skip files that are not in related resources because may not have info about the territory
+            }
+            const node: TreeNode = {
+                key: elem.id,
+                label:
+                    relatedResource.getName(
+                        this.translateService.currentLang,
+                        this.translateService.getDefaultLang()
+                    ) || undefined,
+                leaf: true,
+                type: "dataset",
+                data: relatedResource,
+            };
+            children.push(node);
+        }
+        return [...children, ...this.toTreeNodeListJaxiCollection(jaxi.nodes, relatedResources)];
+    }
+
+    private toTreeNodeListJaxiCollection(
+        data: JaxiCollectionNodes,
+        relatedResources: ResourcesWithStatisticalOperation
+    ): TreeNode[] {
+        const children = [];
+        for (const elem of data.node) {
+            const node: TreeNode = {
+                key: elem.name,
+                label:
+                    elem.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
+            };
+            if (elem.nodes) {
+                node.leaf = false;
+                node.type = "collection-node";
+                node.children = this.toTreeNodeListJaxi(elem, relatedResources);
+                node.data = elem;
+                if (node.children.length === 0) {
+                    continue;
+                }
+            } else {
+                if (!relatedResources.resource.map((elem) => elem.id).includes(elem.name)) {
+                    continue;
+                }
+                node.type = "dataset";
+                node.leaf = true;
+                node.data = relatedResources.resource.find((res) => res.id === elem.name);
+            }
+            children.push(node);
+        }
+        return children.sort((a, b) => a.data.sort.localeCompare(b.data.sort) || 0);
     }
 
     private isJaxiDataset(url: string) {
