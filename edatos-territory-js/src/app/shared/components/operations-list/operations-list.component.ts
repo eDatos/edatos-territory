@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from "@angular/core
 import { TreeNode } from "primeng/api";
 
 import { TranslateService } from "@ngx-translate/core";
-import { finalize, forkJoin } from "rxjs";
+import { catchError, finalize, forkJoin, of } from "rxjs";
 
 import { JAXI_TERRITORY_QUERY_KEY, VISUALIZER_TERRITORY_QUERY_KEY } from "@app/app.constants";
 import {
@@ -230,9 +230,16 @@ export class OperationsListComponent implements OnChanges {
             if (node.data.mainResource.visualizerHtmlLink.includes("jaxi")) {
                 this.statisticalResourcesService
                     .getJaxiCollectionByUrn(node.data.mainResource.urn)
-                    .pipe(finalize(() => (node.loading = false)))
+                    .pipe(
+                        catchError(() => of(null)),
+                        finalize(() => (node.loading = false)),
+                    )
                     .subscribe((collection) => {
-                        node.children = this.toTreeNodeListJaxi(collection.data, node.data.relatedResources);
+                        if (collection) {
+                            node.children = this.toTreeNodeListJaxi(collection.data, node.data.relatedResources);
+                        } else {
+                            node.children = this.toTreeNodeListRelatedResources(node.data.relatedResources);
+                        }
                     });
             } else {
                 this.statisticalResourcesService
@@ -341,6 +348,23 @@ export class OperationsListComponent implements OnChanges {
             children.push(node);
         }
         return children.sort((a, b) => a.data.sort.localeCompare(b.data.sort) || 0);
+    }
+
+    private toTreeNodeListRelatedResources(relatedResources: ResourcesWithStatisticalOperation): TreeNode[] {
+        const children = [];
+        for (const resource of relatedResources.resource) {
+            const node: TreeNode = {
+                key: resource.urn,
+                label:
+                    resource.getName(this.translateService.currentLang, this.translateService.getDefaultLang()) ||
+                    undefined,
+                leaf: true,
+                type: "dataset",
+                data: resource,
+            };
+            children.push(node);
+        }
+        return children.sort((a, b) => a.label!.localeCompare(b.label!) || 0);
     }
 
     private isJaxiDataset(url: string) {
